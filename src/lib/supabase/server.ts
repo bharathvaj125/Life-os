@@ -1,0 +1,23 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseConfig } from "./config";
+
+// Use in Server Components, Server Actions, and Route Handlers.
+// Auth session refresh/proxy wiring will be added with the authentication feature.
+export async function createClient() {
+  const cookieStore = await cookies();
+  const { url, key } = getSupabaseConfig();
+  return createServerClient(url, key, {
+    cookies: {
+      getAll() { return cookieStore.getAll(); },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Server Components cannot write cookies. Refresh sessions in a proxy
+          // or a writable request context when authentication is implemented.
+        }
+      },
+    },
+  });
+}

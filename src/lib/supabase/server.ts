@@ -1,9 +1,9 @@
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseConfig } from "./config";
 
-// Use in Server Components, Server Actions, and Route Handlers.
-// Auth session refresh/proxy wiring will be added with the authentication feature.
+// Route Handlers can persist cookie changes; Server Components rely on proxy refresh.
 export async function createClient() {
   const cookieStore = await cookies();
   const { url, key } = getSupabaseConfig();

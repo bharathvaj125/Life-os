@@ -55,7 +55,9 @@ Empty directories have `.gitkeep` files so Git retains the structure.
 - Community challenges and gamification.
 - Rooftop solar education and awareness.
 
-Authentication, session refresh/proxy wiring, authorization, row-level security, database tables, integrations, and business logic are deliberately deferred. Before adding data, define migrations and RLS policies, configure Supabase Authentication and redirect URLs, and enforce admin roles on the server. The Supabase server helper prepares cookie access but does not implement an authentication flow.
+The first backend slice now includes email/password auth endpoints, SSR session refresh, private profile APIs, and a profile migration with row-level security. Configure a development Supabase project and apply the migration before testing persistence. Hosted auth/email/persistence validation is pending configuration. Footprint, nudges, points, community, solar, and admin business logic remain planned. Admin authorization must be implemented before adding privileged operations.
+
+See [API contract](docs/API_CONTRACT.md), [backend setup and test limitations](docs/BACKEND_SETUP.md), [schema plan](docs/SCHEMA_PLAN.md), and [two-person work split](docs/WORK_SPLIT.md). Run `npm run test:backend` for input/security and embedded PostgreSQL migration tests.
 
 ## Stack
 

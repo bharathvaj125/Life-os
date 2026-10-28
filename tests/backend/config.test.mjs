@@ -20,6 +20,11 @@ test('configuration rejects missing settings and insecure remote URLs', t => {
   assert.equal(getSupabaseConfig().url, 'https://project.supabase.co');
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321';
   assert.equal(getSupabaseConfig().url, 'http://127.0.0.1:54321');
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'sb_secret_example';
+  assert.throws(getSupabaseConfig, SupabaseConfigError);
+  const fakePayload = Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url');
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = `test.${fakePayload}.test`;
+  assert.throws(getSupabaseConfig, SupabaseConfigError);
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = '';
   assert.throws(getSupabaseConfig, SupabaseConfigError);
 });

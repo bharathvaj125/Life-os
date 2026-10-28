@@ -4,7 +4,7 @@ Project: HackCult 2026 · HC26-GEDA01 · Mission LiFE Citizen Engagement Applica
 
 ## 1. Starting point and scope
 
-The Next.js scaffold is already complete and pushed. Do not recreate the project, replace the stack, or regenerate configuration. At the initial scaffold commit, the routes were placeholders and authentication/database logic was not implemented. The first Person 1 backend branch now adds the auth/profile foundation, shared contracts, and a private-profile migration; see `docs/API_CONTRACT.md` and `docs/BACKEND_SETUP.md`. Hosted Supabase validation is pending project creation. The four core business feature groups remain to be implemented.
+The Next.js scaffold is already complete and pushed. Do not recreate the project, replace the stack, or regenerate configuration. At the initial scaffold commit, the routes were placeholders and authentication/database logic was not implemented. The Person 1 backend branch now implements auth/profiles and all four core backend groups, with typed adapters and two migrations; see `docs/API_CONTRACT.md`, `docs/PERSON_2_HANDOFF.md`, and `docs/PERSON_1_STATUS.md`. Hosted Supabase validation is pending project creation, and frontend integration remains Person 2 work. The queue below records ownership and acceptance targets, not a claim of a finished live application.
 
 Confirmed stack: Next.js App Router, React, TypeScript, Tailwind CSS, Supabase PostgreSQL and Authentication, Recharts, Lucide React, ESLint, and npm. Use Next.js Route Handlers for backend endpoints initially. Do not add a separate backend, state library, UI framework, or external API dependency without agreement.
 

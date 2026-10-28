@@ -13,7 +13,7 @@ function knownKeys(value: Record<string, unknown>, allowed: string[], errors: Re
 }
 export function parseCredentials(value: unknown, mode: "signup" | "signin"): CredentialsInput {
   const input = record(value);
-  const errors: Record<string, string> = {};
+  const errors: Record<string, string> = Object.create(null);
   knownKeys(input, ["email", "password"], errors);
   const email = typeof input.email === "string" ? input.email.trim() : "";
   const password = typeof input.password === "string" ? input.password : "";
@@ -26,7 +26,7 @@ export function parseCredentials(value: unknown, mode: "signup" | "signin"): Cre
 }
 export function parseProfile(value: unknown): ProfileInput {
   const input = record(value);
-  const errors: Record<string, string> = {};
+  const errors: Record<string, string> = Object.create(null);
   knownKeys(input, ["displayName", "state", "district", "householdSize", "communityOptIn"], errors);
   function text(key: string, min: number, max: number) {
     const v = typeof input[key] === "string" ? input[key].trim() : "";

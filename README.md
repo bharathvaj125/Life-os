@@ -25,6 +25,8 @@ For repeatable installs after cloning, use `npm ci` with the committed lockfile.
 | `npm run dev` | Start Next.js development server |
 | `npm run lint` | Run ESLint with zero warnings allowed |
 | `npm run typecheck` | Run TypeScript checking |
+| `npm run test:backend` | Calculation, validation, PostgreSQL/RLS and reward tests |
+| `npm run test:http` | Failure-only HTTP smoke checks on an unconfigured production build |
 | `npm run build` | Compile all routes for production |
 | `npm start` | Serve the production build |
 
@@ -48,16 +50,16 @@ Empty directories have `.gitkeep` files so Git retains the structure.
 
 `/`, `/dashboard`, `/footprint`, `/actions`, `/community`, `/resources`, and `/admin` are working public placeholders. The admin route contains no privileged data or operations; it is not an authorization boundary.
 
-## Planned features — not implemented
+## Core feature implementation status
 
-- Sustainable energy habits and personalized nudges.
-- Carbon footprint inputs, calculations, history, and analytics.
-- Community challenges and gamification.
-- Rooftop solar education and awareness.
+- Backend: contextual daily tasks, one-time rewards, points/streaks, opt-in leaderboards, and community challenge progress.
+- Backend: household electricity baseline/history with daily normalization; carbon estimates require a reviewed coefficient and are otherwise unavailable (null).
+- Backend: official resource links and an illustrative rooftop solar planning estimate with disclosed assumptions.
+- Frontend: routes remain placeholders, reserved for Person 2 to integrate using the feature adapters.
 
-The first backend slice now includes email/password auth endpoints, SSR session refresh, private profile APIs, and a profile migration with row-level security. Configure a development Supabase project and apply the migration before testing persistence. Hosted auth/email/persistence validation is pending configuration. Footprint, nudges, points, community, solar, and admin business logic remain planned. Admin authorization must be implemented before adding privileged operations.
+Email/password auth endpoints, SSR session refresh, private profiles, and both core migrations are implemented. Configure a development Supabase project and apply both migrations before testing hosted persistence. Auth/email/PostgREST and deployed integration remain unverified. No privileged admin operations are implemented.
 
-See [API contract](docs/API_CONTRACT.md), [backend setup and test limitations](docs/BACKEND_SETUP.md), [schema plan](docs/SCHEMA_PLAN.md), and [two-person work split](docs/WORK_SPLIT.md). Run `npm run test:backend` for input/security and embedded PostgreSQL migration tests.
+Read the [API contract](docs/API_CONTRACT.md), [frontend handoff](docs/PERSON_2_HANDOFF.md), [backend setup](docs/BACKEND_SETUP.md), [calculation assumptions](docs/CALCULATION_METHODS.md), [release checklist](docs/DEPLOYMENT.md), and [work split](docs/WORK_SPLIT.md). Run `npm run test:backend` for validation/calculation and embedded PostgreSQL integration tests. The development-only PostgreSQL engine does not replace testing actual Supabase Auth/PostgREST or separate concurrent transactions.
 
 ## Stack
 

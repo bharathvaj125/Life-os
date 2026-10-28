@@ -1,12 +1,12 @@
-# LiFE-OS API contract — backend foundation v0.1
+# LiFE-OS API contract — core backend v0.2
 
-Status: first implementation handoff for Person 2 to review. Identity and profile endpoints below are implemented in this branch. Remaining feature endpoints are **planned**, not available. Do not build production calls to planned endpoints or treat fixture responses as persisted data.
+Status: all endpoints listed below are implemented in this branch and locally validated. Person 2 must review the v0.2 type changes before frontend integration. Hosted Supabase Auth/PostgREST and deployment validation are still pending; Local verification covers database functions and HTTP failure/validation wiring; successful web authentication/persistence still requires the real provider. Local SQL tests are not proof of hosted connectivity.
 
 ## Shared rules
 
 - Same-origin Next.js endpoints under `/api`. Browser callers use the exported adapters below with cookie-based sessions; no bearer token handling or localStorage token copies in page code.
 - Success: `{ "data": T }`. Failure: `{ "error": { "code": string, "message": string, "fieldErrors"?: { "field": "message" } } }`.
-- Shared implemented types: `src/types/api.ts`. Proposed later types: `src/types/domain.ts`. Error handling: `ApiClientError` from `src/lib/utils/api-client.ts`.
+- Shared implemented types: `src/types/api.ts` and `src/types/domain.ts`. Error handling: `ApiClientError` from `src/lib/utils/api-client.ts`.
 - Authenticated responses and auth failures use `Cache-Control: private, no-store`.
 - Mutation requests require an `Origin` matching the incoming HTTP Host and request protocol. Do not add wildcard CORS. Non-browser test clients must supply the correct Origin. Configure deployment host/scheme forwarding so the application sees its public origin. The check does not use `x-forwarded-host`; the edge must validate incoming hostnames.
 - JSON bodies use `Content-Type: application/json`; maximum 16 KiB, enforced by bytes read. Unknown input fields are rejected. IDs, timestamps, and points are never accepted from user inputs unless explicitly specified.
@@ -91,14 +91,20 @@ A user without a profile receives `{ "data": { "profile": null } }`; use this fo
 | `RATE_LIMITED` | 429 | Provider rate limit; wait before retrying |
 | `SERVICE_UNAVAILABLE` | 503 | Missing configuration or unavailable provider/storage |
 | `INTERNAL_ERROR` | 500 | Unexpected failure, with sanitized message |
+| `PROFILE_REQUIRED` | 409 | Complete onboarding/profile first |
+| `PERIOD_OVERLAP` | 409 | Measurement period overlaps saved data |
+| `BASELINE_ORDER` | 409 | New period must follow original baseline |
+| `NOT_FOUND` | 404 | Unknown or unowned task/challenge |
+| `ACTION_EXPIRED` | 409 | New completion is outside the assigned local date |
+| `CHALLENGE_CLOSED` | 409 | Challenge is not active for joining |
 
 The rate-limit response currently comes from Supabase; there is no claim of a custom distributed application rate limiter. Platform-level request limits should also be configured for deployment.
 
-## Planned feature endpoints — implement in later slices
+## Implemented core feature endpoints
 
-These reserve paths and payloads for coordination. Their types are proposed until the relevant slice is reviewed; no HTTP handlers or persistence for them exist yet.
+Import the browser-safe adapters documented in `PERSON_2_HANDOFF.md`. Data persistence is implemented through the second migration and reviewed RPCs. A real Supabase project must be configured before the web endpoints can access that database.
 
-| Method/path | Proposed payload / return | Authorization and behavior |
+| Method/path | Payload / return | Authorization and behavior |
 | --- | --- | --- |
 | `POST /api/footprint/entries` | `FootprintInput` → `FootprintEntry` | User only; first accepted entry establishes baseline atomically |
 | `GET /api/footprint/entries?limit=20&cursor=...` | `FootprintHistory` | User only; limit integer 1–100, opaque cursor; oldest baseline retained separately |
@@ -106,19 +112,20 @@ These reserve paths and payloads for coordination. Their types are proposed unti
 | `POST /api/actions/{assignmentId}/complete` | No body → `CompletionResult` | User only; owned assignment; award once; repeated completion returns original result and `alreadyCompleted: true` |
 | `GET /api/community/challenges` | `{ challenges: Challenge[] }` | User only; initial active catalog capped at 100 |
 | `POST /api/community/challenges/{challengeId}/join` | No body → `{ challengeId, joined: true }` | User only; idempotent membership |
+| `GET /api/community/me` | `CommunitySummary` | User only; current user's generated alias, opt-in, points, completed tasks, local-day streak |
 | `GET /api/community/leaderboard?limit=20` | `{ entries: LeaderboardEntry[] }` | User only; limit 1–100; opt-in aliases only, no private identifiers |
 | `GET /api/resources?category=solar` | `{ resources: Resource[] }` | Public; optional category energy/solar/habits; initial curated catalog capped at 100 |
 | `POST /api/resources/solar-estimate` | `SolarInput` → `SolarEstimate` | User only; same-origin; assumption-based estimate, no quote or subsidy guarantee |
 
-Proposed footprint constraints: ISO `YYYY-MM-DD` dates, inclusive start/end, start ≤ end, period 1–366 days, no future dates in Asia/Kolkata, non-overlapping periods per user, finite electricity 0–100,000 kWh per period. Daily averages use actual inclusive period days. Baseline comparisons use kg CO2e/day, never raw totals for periods of different lengths. History is newest first by period end plus unique ID, with null cursor at the end; reduction is null before a comparable post-baseline entry or if baseline emissions are zero. State factor choice/source must be confirmed before implementation; no fabricated default factor is published here.
+Footprint constraints: ISO `YYYY-MM-DD` dates, inclusive start/end, start ≤ end, period 1–366 days, no future dates in Asia/Kolkata, non-overlapping periods per user, finite electricity 0–100,000 kWh per period. Daily averages use actual inclusive period days. Baseline comparisons use daily kWh, never raw totals from periods of different lengths or coefficient changes. History is newest first by period end plus unique ID, with null cursor at the end; reduction is null before a post-baseline entry or if baseline daily electricity is zero. No coefficient is seeded. Until a reviewed factor covers the full period, carbon/factor fields are null and progress uses `reductionMetric: "electricityKwhPerDay"`. See `CALCULATION_METHODS.md` for publication and immutable snapshot rules.
 
-Proposed solar constraints: finite roof area 1–10,000 m² and monthly usage 0–100,000 kWh. Provider/geography coverage and all conversion assumptions must be verified and documented before publishing results. Monetary savings are intentionally omitted until a dated tariff source is selected. No live grid/satellite API is promised.
+Solar constraints: finite roof area 1–10,000 m² and monthly usage 0–100,000 kWh. The current result is an illustrative scenario using 10 m²/kWp and 1200 kWh/kWp/year, limited by both roof area and annual demand. These are disclosed engineering assumptions, not verified regional forecasts. Monetary savings are omitted until a dated tariff source is selected. No live grid/satellite API is integrated. All assumptions are returned with the result.
 
-Daily tasks/streaks use Asia/Kolkata calendar dates, not rolling 24-hour windows. Event timestamps are UTC ISO instants. Challenges use documented calendar start/end dates. All measurement and calculation fields carry explicit units from `src/types/domain.ts` and source/formula metadata. Empty lists are `[]`, unavailable baseline/profile values are `null`, and errors are not represented as empty success lists.
+Daily tasks/streaks use Asia/Kolkata calendar dates, not rolling 24-hour windows. Event timestamps are UTC ISO instants. Challenges use documented calendar start/end dates. All measurement and calculation fields carry explicit units from `src/types/domain.ts` and source/formula metadata. Resource `reviewedOn` is nullable until a content/availability check is recorded. Challenges count post-join, in-range task completions; all-time leaderboard points and current local-day streaks do not imply verified emissions savings. Empty lists are `[]`, unavailable baseline/profile values are `null`, and errors are not represented as empty success lists.
 
 ## Next handoff for Person 2
 
-1. Review this contract and request field changes before connecting forms.
-2. Start auth/onboarding/profile UI using the implemented adapters.
-3. Use labelled typed fixtures only for future feature UI; do not connect planned URLs yet.
-4. Read `docs/BACKEND_SETUP.md` for configuration and test limitations.
+1. Review this contract and the nullable carbon/resource fields before connecting forms.
+2. Follow `PERSON_2_HANDOFF.md` for the complete adapter and page connection order.
+3. Configure a development Supabase project and apply both migrations before live integration.
+4. Read `BACKEND_SETUP.md` and `DEPLOYMENT.md` for test limitations and release gates.

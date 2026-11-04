@@ -1,62 +1,251 @@
 # LiFE-OS
 
-Mission LiFE citizen engagement platform for sustainable energy habits, carbon footprint tracking, community challenges, and rooftop solar awareness.
+**A zero-friction sustainability companion for Mission LiFE.** LiFE-OS turns a household's electricity bill into a carbon footprint, rupee-relevant saving suggestions, a rooftop solar estimate and shared community goals, with area-level views for GEDA administrators that never expose a single household.
 
-Built for **HackCult 2026**, problem statement **HC26-GEDA01 — Development of an Interactive Mission LiFE Citizen Engagement Application**.
+Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an Interactive "Mission LiFE" Citizen Engagement Application** (Gujarat Energy Development Agency).
 
-## Local setup
+> **Honest status.** Every feature below is implemented and runs end to end with persistent data. A few inputs are *planning assumptions* rather than audited figures (emission factors, solar subsidy, the Cleanest Hour intensity curve). They are stored in one place each, shown to the user beside every result, and listed under [Limitations](#limitations).
 
-Use Node.js 24 LTS and npm (the scaffold is validated with Node 24 and npm 11).
+## What it does
 
-```sh
-npm install
-cp .env.example .env.local
+| Brief requirement | What you get | Where |
+| --- | --- | --- |
+| **Personalised footprint tracker** | One-minute onboarding from last month's units, a baseline, monthly history and trend, travel and LPG add-ons, and a visible calculation | `/onboarding`, `/footprint`, `/dashboard` |
+| **Behavioural nudges and micro-tasks** | Rule-based suggestions from the user's own bills and the time of day (evening-peak alert, usage rise, AC season), plus 10 daily, weekly and one-time tasks | `/actions` |
+| **Gamification and social impact** | Points, streaks, levels, local and Gujarat-wide challenges with shared targets, opt-in leaderboards | `/community` |
+| **Actionable resource hub** | Rooftop solar estimator with ranges and assumptions, step-by-step path to apply, links to official bodies | `/resources` |
+| **State administrators** | Server-protected area view with small-group suppression | `/admin` |
+| **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
+
+### Screens
+
+| Dashboard | Community | Resource hub |
+| --- | --- | --- |
+| ![Dashboard](docs/pitch/img/dashboard.png) | ![Community](docs/pitch/img/community.png) | ![Resource hub](docs/pitch/img/resources.png) |
+
+Pitch deck: [`docs/LiFE-OS-pitch-deck.pdf`](docs/LiFE-OS-pitch-deck.pdf) · Demo script and submission checklist: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
+
+### What makes it different
+
+- **Rupees, not just kilograms.** Savings in ₹ use the household's *own* bill amount and units. We never guess a tariff.
+- **Explainable by design.** Each nudge states why it fired and how the saving was estimated. Each task lists its assumption.
+- **Fair by construction.** One reward per task per day, week or lifetime, enforced by a database unique key, plus a daily points ceiling.
+- **Privacy first.** Leaderboards are opt-in. Admins see only areas with at least 5 households, grouped by the first 3 PIN digits.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["Next.js App Router pages<br/>React + Tailwind + Recharts"]
+  end
+  subgraph Server["Next.js server (Vercel)"]
+    API["Route handlers /api/v1/*<br/>zod validation, JSON-only writes"]
+    SVC["Services<br/>profile, footprint, actions, community, admin"]
+    DOM["Pure domain logic<br/>lib/calculations: footprint, nudges,<br/>gamification, solar, schedule, aggregate"]
+    AUTH["Signed-cookie sessions<br/>HMAC, httpOnly, SameSite=Lax"]
+    REPO{{"Repository interface"}}
+  end
+  subgraph Storage
+    PG[("Supabase PostgreSQL<br/>RLS on, service-role only")]
+    FS[("Local JSON demo store<br/>.data/lifeos.json")]
+  end
+  UI -- "fetch + server components" --> API
+  UI -- "server components" --> SVC
+  API --> AUTH
+  API --> SVC
+  SVC --> DOM
+  SVC --> REPO
+  REPO -- "SUPABASE_SERVICE_ROLE_KEY set" --> PG
+  REPO -- "default" --> FS
+```
+
+**Layers**
+
+1. **Pages** (`src/app`) are server components that read through services, with small client components for forms and buttons.
+2. **Route handlers** (`src/app/api/v1`) validate every write with zod, require `application/json` (a CSRF guard on top of SameSite cookies), and return `{ data }` or `{ error }`.
+3. **Services** (`src/services`) hold use-case logic and authorisation (who may do what).
+4. **Domain** (`src/lib/calculations`) is pure, dependency-free TypeScript covered by unit tests.
+5. **Repository** (`src/lib/store`) is the only persistence boundary. A Supabase PostgreSQL adapter and a local JSON store implement the same interface, so the app runs with zero setup and switches to Postgres by setting two environment variables.
+
+### Completing a task (the fairness-critical path)
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant R as POST /api/v1/tasks/:id/complete
+  participant S as actions service
+  participant D as gamification.evaluateCompletion
+  participant DB as Repository
+  B->>R: click "I did this"
+  R->>R: verify signed session cookie
+  R->>S: completeTask(user, taskId)
+  S->>DB: list this user's completions
+  S->>D: dedupe key, today's points, daily cap
+  D-->>S: ok(points, impactKg) or reason
+  S->>DB: addCompletion (unique user_id + dedupe_key)
+  DB-->>S: created or duplicate
+  S-->>R: 201, or 409 with the reason
+  R-->>B: JSON, UI refreshes server data
+```
+
+The client never sends points. A second simultaneous request is rejected by the unique constraint, not just by the check above it.
+
+## Database schema
+
+Defined in [`supabase/migrations/20261103000000_init.sql`](supabase/migrations/20261103000000_init.sql).
+
+```mermaid
+erDiagram
+  app_users ||--o{ footprint_snapshots : has
+  app_users ||--o{ task_completions : earns
+  app_users ||--o{ challenge_members : joins
+  challenges ||--o{ challenge_members : has
+  app_users {
+    text id PK
+    text display_name
+    text pincode
+    int household_size
+    bool leaderboard_opt_in
+    bool is_demo
+  }
+  footprint_snapshots {
+    text id PK
+    text user_id FK
+    text period "YYYY-MM, unique with user_id"
+    numeric electricity_kwh
+    numeric bill_amount_inr
+    numeric total_kg
+    text factor_version
+  }
+  task_completions {
+    text id PK
+    text user_id FK
+    text task_id
+    text dedupe_key "unique with user_id"
+    date completed_on
+    int points
+    numeric impact_kg
+  }
+  challenges {
+    text id PK
+    text region_prefix
+    text metric "kg_avoided or actions"
+    numeric target
+    date starts_on
+    date ends_on
+  }
+  challenge_members {
+    text challenge_id PK
+    text user_id PK
+  }
+```
+
+Row level security is enabled on every table with **no** public policy. The browser's publishable key can read and write nothing; only the server, holding the service-role key, touches data, and authorisation is enforced in the service layer.
+
+## How the numbers are calculated
+
+| Output | Formula | Source and caveat |
+| --- | --- | --- |
+| Footprint | `kWh × grid factor + km × vehicle factor + cylinders × LPG factor` | Factors in [`emission-factors.ts`](src/lib/calculations/emission-factors.ts), versioned and stored on every snapshot. Grid factor is indicative of the CEA CO₂ Baseline Database, **not the current official release**. |
+| Rupee savings | `kWh saved × (bill amount ÷ units)` | The household's own rate. Omitted when no bill amount was entered. |
+| Solar size | `min(roof area × usable fraction ÷ 10 m² per kWp, annual use ÷ yield)` | Shade lowers the usable fraction. Yield 1300–1600 kWh/kWp/yr gives a low–high range. |
+| Solar payback | `net cost ÷ yearly saving`, low to high | Subsidy follows PM Surya Ghar as last known and is **flagged unverified** in the UI. |
+| Cleanest Hour | `kWh × factor × hourly intensity index` | The index is an **illustrative model**, not live grid data. |
+| Area totals | Latest snapshot per household, grouped by 3-digit PIN prefix | Groups under 5 households are suppressed. |
+
+## Tech stack
+
+Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · Recharts · zod · Supabase (PostgreSQL) · Vitest.
+
+## Run it locally
+
+Requires Node.js 24 and npm 11.
+
+```bash
+git clone https://github.com/bharathvaj125/Life-os.git
+cd Life-os
+npm ci
+cp .env.example .env.local     # on Windows PowerShell: Copy-Item .env.example .env.local
+```
+
+Edit `.env.local` and set at least:
+
+```dotenv
+SESSION_SECRET=any-long-random-string
+ADMIN_ACCESS_CODE=choose-a-code-for-the-admin-view
+```
+
+```bash
 npm run dev
 ```
 
-Open the development server on port 3000. All placeholder pages work without Supabase credentials. Before using the Supabase helpers, replace the placeholders in `.env.local` with your project's URL and publishable key from Supabase settings. Do not commit `.env.local`. Only public Supabase configuration uses `NEXT_PUBLIC_`; never put service-role keys or other secrets in public variables.
+Open <http://localhost:3000>. With no Supabase variables set, data lives in `.data/lifeos.json` and is pre-filled with 18 clearly labelled **demo households** so the leaderboard, challenges and admin view are not empty. Delete `.data/` to reset.
 
-For repeatable installs after cloning, use `npm ci` with the committed lockfile.
+### Switch to Supabase
+
+1. Create a Supabase project and run [`supabase/migrations/20261103000000_init.sql`](supabase/migrations/20261103000000_init.sql) in the SQL editor.
+2. Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) in `.env.local` or the host's environment settings.
+3. Restart. The footer now reads "Supabase storage". Sign in to `/admin` and press **Load demo households** if you want sample community data.
+
+### Deploy to Vercel
+
+Import the repository, add `SESSION_SECRET`, `ADMIN_ACCESS_CODE`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SERVICE_ROLE_KEY`, then deploy. Without Supabase variables, Vercel's read-only filesystem makes the JSON store temporary, so use Supabase for any shared deployment.
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start Next.js development server |
-| `npm run lint` | Run ESLint with zero warnings allowed |
-| `npm run typecheck` | Run TypeScript checking |
-| `npm run build` | Compile all routes for production |
-| `npm start` | Serve the production build |
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint, zero warnings |
+| `npm test` | Vitest unit tests for the domain logic |
 
-## Architecture
+## Project layout
 
-- `src/app`: App Router pages, shared layout, global styles, and future API route handlers.
-- `src/components/ui`: Reusable button and card primitives.
-- `src/components/layout`: Responsive navigation and placeholder page layout.
-- `src/components/charts`: Client-side Recharts building blocks; no fabricated analytics.
-- `src/features/{footprint,nudges,gamification,solar}`: Reserved feature modules.
-- `src/lib/supabase`: Lazy browser/server Supabase factories using environment variables.
-- `src/lib/calculations`: Future documented footprint calculations.
-- `src/lib/integrations`: Future external API adapters. Keep credentials server-side.
-- `src/lib/utils` and `src/types`: Future shared utilities and types.
-- `public`: Static assets.
-- `supabase/migrations`: Future versioned PostgreSQL schema and policies.
+```text
+src/
+  app/                  pages and /api/v1 route handlers
+  components/           forms, charts, layout, ui primitives
+  features/             task catalogue, official resource list
+  lib/
+    calculations/       pure domain logic (tested)
+    store/              Repository interface, JSON store, Supabase adapter, seed
+    auth/               signed-cookie sessions, admin check
+  services/             use cases and authorisation
+  types/                shared types
+supabase/migrations/    PostgreSQL schema
+tests/                  unit tests
+```
 
-Empty directories have `.gitkeep` files so Git retains the structure.
+## Scalability notes
 
-## Routes
+- Domain logic is stateless and pure, so the app scales horizontally on serverless.
+- Writes are idempotent at the database (`unique(user_id, dedupe_key)`, `unique(user_id, period)`).
+- Indexes cover per-user history and region grouping.
+- Today the admin view and leaderboard read full tables. At state scale these should become SQL views or materialised aggregates (`GROUP BY left(pincode,3) HAVING count(*) >= 5`) refreshed on a schedule, and leaderboards should use a ranked, paginated query.
 
-`/`, `/dashboard`, `/footprint`, `/actions`, `/community`, `/resources`, and `/admin` are working public placeholders. The admin route contains no privileged data or operations; it is not an authorization boundary.
+## Limitations
 
-## Planned features — not implemented
+- **Emission factors are indicative.** Update `EMISSION_FACTORS` from the current CEA release before any official use.
+- **Solar subsidy and cost figures are assumptions**, labelled unverified in the app. Confirm on the PM Surya Ghar portal.
+- **Cleanest Hour is modelled**, not live grid data, and shows rupee effects only when the user supplies a peak surcharge.
+- **Tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap, not proof of action.
+- **Sessions are anonymous signed cookies**, not accounts. There is no password recovery and no cross-device sign-in.
+- **The Supabase adapter has not been run against a live project** in this repository's development. The schema and adapter follow the documented API, but expect to verify them on first connection.
+- **No bill OCR, satellite roof tracing or AI assistant** is implemented.
+- Demo households are sample data and are included in admin totals, flagged as demo.
 
-- Sustainable energy habits and personalized nudges.
-- Carbon footprint inputs, calculations, history, and analytics.
-- Community challenges and gamification.
-- Rooftop solar education and awareness.
+## Roadmap
 
-Authentication, session refresh/proxy wiring, authorization, row-level security, database tables, integrations, and business logic are deliberately deferred. Before adding data, define migrations and RLS policies, configure Supabase Authentication and redirect URLs, and enforce admin roles on the server. The Supabase server helper prepares cookie access but does not implement an authentication flow.
+1. Supabase Auth (email or phone OTP) replacing anonymous sessions, with per-user RLS policies.
+2. Bill upload with OCR and a mandatory review step before saving.
+3. Roof outline on a map with PVGIS yield for the chosen location.
+4. DISCOM tariff slabs and time-of-day rules from official GERC orders, with an effective-date audit trail.
+5. Hourly grid intensity from a published series to replace the illustrative Cleanest Hour curve.
+6. Aggregate views as SQL materialised views, Gujarati and Hindi interfaces, installable PWA with reminder notifications.
 
-## Stack
+## Licence and credits
 
-Next.js App Router, React, TypeScript, Tailwind CSS, Supabase PostgreSQL and Authentication SDKs, Recharts, Lucide React, and ESLint. npm is the package manager. No live database or external API is required to run this scaffold.
+Created for HackCult '26. Mission LiFE is an initiative of the Government of India; LiFE-OS is an independent hackathon project and is not an official GEDA product.

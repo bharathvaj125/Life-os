@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Leaf } from "lucide-react";
 
-const links = [["/dashboard", "Dashboard"], ["/footprint", "Footprint"], ["/actions", "Actions"], ["/community", "Community"], ["/resources", "Resources"], ["/admin", "Admin"]];
+const links = [["/dashboard", "Dashboard"], ["/footprint", "Footprint"], ["/actions", "Actions"], ["/schedule", "Cleanest Hour"], ["/community", "Community"], ["/resources", "Resources"]];
 
 export function Navigation() {
   const pathname = usePathname();

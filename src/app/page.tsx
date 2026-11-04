@@ -1,16 +1,31 @@
 import Link from "next/link";
-import { ArrowUpRight, Leaf } from "lucide-react";
+import { ArrowUpRight, BarChart3, Leaf, ListChecks, Sun, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { getCurrentUser } from "@/lib/auth/session";
 
 const areas = [
-  { href: "/dashboard", title: "Your dashboard", text: "A future home for your sustainability journey." },
-  { href: "/footprint", title: "Carbon footprint", text: "Understand the impact of everyday choices." },
-  { href: "/actions", title: "Sustainable actions", text: "Discover habits and timely nudges." },
-  { href: "/community", title: "Community challenges", text: "Build momentum through shared goals." },
-  { href: "/resources", title: "Learn & explore", text: "Explore energy awareness and rooftop solar." },
-  { href: "/admin", title: "Administration", text: "A foundation for future platform management." },
+  { icon: BarChart3, title: "Know your footprint", text: "Enter last month's units and get a footprint, a baseline and a trend you can trust." },
+  { icon: ListChecks, title: "Act on what matters", text: "Nudges built from your own bills and the time of day, plus quick daily and weekly tasks." },
+  { icon: Users, title: "Win together", text: "Points, streaks and local challenges that add up to a community goal." },
+  { icon: Sun, title: "Go solar with eyes open", text: "A transparent rooftop estimate with ranges, assumptions and official next steps." },
 ];
 
-export default function Home() {
-  return <><section className="hero"><span className="badge"><Leaf size={16} aria-hidden="true" /> Mission LiFE</span><p className="eyebrow">LIFESTYLE FOR ENVIRONMENT</p><h1>Small habits.<br />A shared future.</h1><p className="intro">LiFE-OS is a foundation for helping citizens understand their impact, adopt sustainable energy habits, and take action together.</p><Link className="button" href="/dashboard">Explore the dashboard <ArrowUpRight size={18} aria-hidden="true" /></Link><p className="muted">Project scaffold · Features will be developed step by step.</p></section><section aria-label="Explore the platform" className="grid">{areas.map(area => <Card key={area.href} title={area.title}><p>{area.text}</p><Link className="text-link" href={area.href}>Explore <span aria-hidden="true">→</span></Link></Card>)}</section></>;
+export default async function Home() {
+  const user = await getCurrentUser();
+  return (
+    <>
+      <section className="hero">
+        <span className="badge"><Leaf size={16} aria-hidden="true" /> Mission LiFE</span>
+        <p className="eyebrow">LIFESTYLE FOR ENVIRONMENT</p>
+        <h1>Small habits.<br />A shared future.</h1>
+        <p className="intro">LiFE-OS turns your electricity bill into a footprint, rupee-saving suggestions, a solar estimate and community action. No long questionnaires.</p>
+        <Link className="button" href={user ? "/dashboard" : "/onboarding"}>{user ? "Open my dashboard" : "Find my footprint"} <ArrowUpRight size={18} aria-hidden="true" /></Link>
+      </section>
+      <section aria-label="What you can do" className="grid four">
+        {areas.map(({ icon: Icon, title, text }) => (
+          <Card key={title} title={title}><Icon aria-hidden="true" size={22} className="card-icon" /><p>{text}</p></Card>
+        ))}
+      </section>
+    </>
+  );
 }

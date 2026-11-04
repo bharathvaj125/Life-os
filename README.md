@@ -31,6 +31,34 @@ Pitch deck: [`docs/LiFE-OS-pitch-deck.pdf`](docs/LiFE-OS-pitch-deck.pdf) · Demo
 - **Explainable by design.** Each nudge states why it fired and how the saving was estimated. Each task lists its assumption.
 - **Fair by construction.** One reward per task per day, week or lifetime, enforced by a database unique key, plus a daily points ceiling.
 - **Privacy first.** Leaderboards are opt-in. Admins see only areas with at least 5 households, grouped by the first 3 PIN digits.
+- **Distinctive civic aesthetics.** Rejects generic AI templates in favour of an editorial, warm design system (*Vedic Solar & Heritage Botanical*).
+
+### Design Identity — *Vedic Solar & Heritage Botanical*
+
+* **Typography Pairing:**
+  * **Headings:** Playfair Display — distinguished editorial serif conveying civic dignity and climate journalism elegance.
+  * **Body & Inputs:** Plus Jakarta Sans — ultra-legible modern humanist sans for tables, cards, and forms.
+  * **Metrics & Units:** JetBrains Mono — crisp tabular alignment for kWh, kg CO₂e, and ₹.
+* **Color Palette:**
+  * **Heritage Pine (#0B2519):** Authoritative forest emerald symbolizing nature and conservation.
+  * **Surya Amber (#D97724):** Warm terracotta gold honoring Indian solar energy and PM Surya Ghar.
+  * **Alabaster Linen (#FBF8F3):** Warm paper-like canvas with a subtle organic dot grid texture.
+
+### Two-Person Team Roles
+
+* **Person 1 (Backend, Database, Calculations & Security):**
+  * Core domain calculation modules in src/lib/calculations/ (CEA CO₂ footprint, PVGIS solar feasibility, gamification idempotency, circadian schedule, and k-anonymity).
+  * Next.js Route Handlers (src/app/api/v1/**), Zod validation, and CSRF protection.
+  * Dual-mode persistence: in-memory/JSON local demo repository (.data/lifeos.json) and Supabase PostgreSQL with RLS.
+  * HMAC-SHA256 signed cookie sessions and security boundaries.
+* **Person 2 (Frontend Architecture, UI/UX, Interactions & Integration):**
+  * All user-facing pages, responsive shells, and navigation with live IST grid phase pill.
+  * Citizen onboarding with real-time carbon baseline computation preview.
+  * Interactive footprint forms, month-over-month trend cards, and Recharts area visualizations.
+  * Task completion buttons with optimistic feedback, streak meters, and points ledger.
+  * 24-hour Cleanest Hour interactive circadian load-shifter.
+  * PM Surya Ghar rooftop solar feasibility estimator with subsidy and payback modeling.
+  * Community challenges and podium honor roll leaderboard.
 
 ## Architecture
 

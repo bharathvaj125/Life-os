@@ -6,43 +6,142 @@ import { ProgressBar, Stat } from "@/components/ui/field";
 import { requireUser } from "@/lib/auth/session";
 import { num } from "@/lib/format";
 import { getActionsView } from "@/services/actions";
+import { Flame, Shield, Sparkles, Zap } from "lucide-react";
 
-export const metadata: Metadata = { title: "Actions" };
+export const metadata: Metadata = { title: "Behavioural Nudges & Micro-Tasks" };
 
-const CADENCE = { daily: "Daily", weekly: "Weekly", once: "One-time" } as const;
+const CADENCE = {
+  daily: "Daily Micro-Habit",
+  weekly: "Weekly Habit",
+  once: "One-Time Action",
+} as const;
 
 export default async function ActionsPage() {
   const user = await requireUser();
   const { nudges, tasks, progress } = await getActionsView(user);
 
+  const dailyTasks = tasks.filter((t) => t.cadence === "daily");
+  const weeklyTasks = tasks.filter((t) => t.cadence === "weekly");
+  const onceTasks = tasks.filter((t) => t.cadence === "once");
+
   return (
     <>
-      <p className="eyebrow">NUDGES AND MICRO-TASKS</p>
-      <h1>Small actions, counted</h1>
-      <p className="intro">Suggestions come from your own bills and the time of day. Tick off the tasks you really did to earn points.</p>
+      <p className="eyebrow">Requirement 2 · Behavioural Nudges & Micro-Tasks</p>
+      <h1>Actionable Everyday Habits</h1>
+      <p className="intro">
+        Nudges are automatically triggered by your household consumption patterns and the active time of day. Log each completed action to claim points towards community goals.
+      </p>
 
-      <section className="stats" aria-label="Progress">
-        <Stat label="Points" value={progress.points} note={`${progress.level.name}`} />
-        <Stat label="Streak" value={`${progress.streak.current} day${progress.streak.current === 1 ? "" : "s"}`} note={`Longest ${progress.streak.longest}`} />
-        <Stat label="CO₂e avoided" value={`${num(progress.kgAvoided)} kg`} tone="good" />
-        <Stat label="Today" value={`${progress.pointsToday}/${progress.dailyLimit}`} note="Daily points limit" />
+      <section className="stats" aria-label="Progress summary">
+        <Stat
+          label="Total Points"
+          value={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <Zap size={22} style={{ color: "var(--surya-600)" }} />
+              {progress.points} pts
+            </span>
+          }
+          note={`${progress.level.name}`}
+        />
+        <Stat
+          label="Active Streak"
+          value={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <Flame size={22} style={{ color: "var(--surya-600)" }} />
+              {progress.streak.current} {progress.streak.current === 1 ? "day" : "days"}
+            </span>
+          }
+          note={`Record: ${progress.streak.longest} days`}
+        />
+        <Stat
+          label="CO₂e Avoided"
+          value={`${num(progress.kgAvoided)} kg`}
+          tone="good"
+          note="Lifetime reduction"
+        />
+        <Stat
+          label="Today's Quota"
+          value={`${progress.pointsToday} / ${progress.dailyLimit}`}
+          note="Max daily cap to preserve fair competition"
+        />
       </section>
-      <ProgressBar pct={Math.round((progress.pointsToday / progress.dailyLimit) * 100)} label="Daily points used" />
 
-      <h2 className="section-title">Suggestions for you</h2>
-      <Card title="Based on your usage"><NudgeList nudges={nudges} /></Card>
+      <div style={{ marginBottom: "32px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px", fontWeight: 600, marginBottom: "6px" }}>
+          <span>Daily points progress</span>
+          <span>{Math.round((progress.pointsToday / progress.dailyLimit) * 100)}%</span>
+        </div>
+        <ProgressBar
+          pct={Math.round((progress.pointsToday / progress.dailyLimit) * 100)}
+          label="Daily points used"
+        />
+      </div>
 
-      <h2 className="section-title">Tasks</h2>
-      <p className="muted">Tasks are self-reported. Points are awarded once per task window and capped each day, so the leaderboard stays fair.</p>
-      <div className="grid tasks">
-        {tasks.map((t) => (
-          <Card key={t.id} title={t.title}>
-            <p className="badge-row"><span className="chip">{CADENCE[t.cadence]}</span><span className="chip">+{t.points} pts</span></p>
-            <p>{t.description}</p>
-            <p className="muted">Saving estimate: {t.assumption}</p>
-            <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} />
-          </Card>
-        ))}
+      <Card
+        title="Dynamic Contextual Suggestions"
+        className="card-accent-surya"
+        icon={<Sparkles size={20} className="card-icon surya" style={{ margin: 0 }} />}
+      >
+        <p style={{ margin: "0 0 16px" }}>
+          These recommendations adapt to your reported bill size, family members, and current peak grid hours.
+        </p>
+        <NudgeList nudges={nudges} />
+      </Card>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "10px", margin: "40px 0 16px" }}>
+        <div>
+          <h2 className="section-title" style={{ margin: 0 }}>
+            Verifiable Action Catalog
+          </h2>
+          <p className="muted" style={{ margin: "4px 0 0" }}>
+            Self-reported actions are protected by strict server-side idempotency: a task can only be rewarded once inside its cadence window.
+          </p>
+        </div>
+        <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "var(--muted-text)" }}>
+          <Shield size={14} /> Server-controlled ledger
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "28px" }}>
+        <h3 style={{ fontSize: "19px", color: "var(--forest-900)", marginBottom: "14px" }}>
+          ⚡ Daily Micro-Tasks
+        </h3>
+        <div className="grid">
+          {dailyTasks.map((t) => (
+            <Card key={t.id} title={t.title}>
+              <div className="badge-row">
+                <span className="chip">{CADENCE[t.cadence]}</span>
+                <span className="chip surya">+{t.points} pts</span>
+              </div>
+              <p style={{ minHeight: "44px" }}>{t.description}</p>
+              <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
+                <strong>Impact Model:</strong> {t.assumption}
+              </p>
+              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} />
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "28px" }}>
+        <h3 style={{ fontSize: "19px", color: "var(--forest-900)", marginBottom: "14px" }}>
+          📅 Weekly Habits & Upgrades
+        </h3>
+        <div className="grid">
+          {weeklyTasks.concat(onceTasks).map((t) => (
+            <Card key={t.id} title={t.title}>
+              <div className="badge-row">
+                <span className="chip">{CADENCE[t.cadence]}</span>
+                <span className="chip surya">+{t.points} pts</span>
+              </div>
+              <p style={{ minHeight: "44px" }}>{t.description}</p>
+              <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
+                <strong>Impact Model:</strong> {t.assumption}
+              </p>
+              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} />
+            </Card>
+          ))}
+        </div>
       </div>
     </>
   );

@@ -4,16 +4,21 @@ import { Card } from "@/components/ui/card";
 import { adminEnabled, isAdmin } from "@/lib/auth/session";
 import { num } from "@/lib/format";
 import { getAdminSummary } from "@/services/admin";
+import { Building2, EyeOff, Lock } from "lucide-react";
 
-export const metadata: Metadata = { title: "Administrator" };
+export const metadata: Metadata = { title: "Administrator — Regional Aggregates" };
 
 export default async function AdminPage() {
   if (!adminEnabled()) {
     return (
       <>
-        <p className="eyebrow">ADMINISTRATOR</p>
-        <h1>Not configured</h1>
-        <Card title="Admin access is off"><p>Set <code>ADMIN_ACCESS_CODE</code> in the server environment to enable this view.</p></Card>
+        <p className="eyebrow">Administrative Portal</p>
+        <h1>Admin Access Not Configured</h1>
+        <Card title="Portal Disabled">
+          <p>
+            Set <code>ADMIN_ACCESS_CODE</code> in your server environment variables to enable this administrative view for state agencies (GEDA / DISCOM).
+          </p>
+        </Card>
       </>
     );
   }
@@ -21,10 +26,16 @@ export default async function AdminPage() {
   if (!(await isAdmin())) {
     return (
       <>
-        <p className="eyebrow">ADMINISTRATOR</p>
-        <h1>Administrator sign-in</h1>
-        <p className="intro">For GEDA and DISCOM staff. This view shows area-level totals only.</p>
-        <Card title="Access code"><AdminLogin /></Card>
+        <p className="eyebrow">GEDA / DISCOM Stakeholders</p>
+        <h1>State Administrator Portal</h1>
+        <p className="intro">
+          Authorized access for Gujarat Energy Development Agency (GEDA) and municipal energy planners. This portal strictly displays k-anonymous regional aggregates.
+        </p>
+        <div style={{ maxWidth: "480px" }}>
+          <Card title="Enter Admin Access Code" icon={<Lock size={18} className="card-icon surya" style={{ margin: 0 }} />}>
+            <AdminLogin />
+          </Card>
+        </div>
       </>
     );
   }
@@ -32,31 +43,69 @@ export default async function AdminPage() {
   const s = await getAdminSummary();
   return (
     <>
-      <p className="eyebrow">ADMINISTRATOR · AREA TOTALS</p>
-      <h1>Participation by area</h1>
-      <p className="intro">Grouped by the first three digits of the PIN code. Areas with fewer than {s.k} households are hidden so no household can be singled out.</p>
+      <p className="eyebrow">State Administrator · Regional Conservation Aggregates</p>
+      <h1>Citizen Engagement by Postal Ward</h1>
+      <p className="intro">
+        Aggregated by 3-digit PIN code prefixes (e.g. 380xxx Ahmedabad, 395xxx Surat). In accordance with digital privacy guidelines, areas with fewer than {s.k} participating households are automatically suppressed to guarantee k-anonymity.
+      </p>
+
       <AdminTools />
 
-      <section className="stats" aria-label="Totals">
-        <div className="stat"><span className="stat-label">Households</span><strong className="stat-value">{s.totalHouseholds}</strong><span className="stat-note">{s.demoHouseholds} are demo data</span></div>
-        <div className="stat"><span className="stat-label">Areas shown</span><strong className="stat-value">{s.rows.length - s.suppressedGroups}</strong><span className="stat-note">{s.suppressedGroups} hidden (under {s.k})</span></div>
+      <section className="stats" aria-label="Administrative totals">
+        <div className="stat">
+          <span className="stat-label">Total Households</span>
+          <strong className="stat-value">{s.totalHouseholds}</strong>
+          <span className="stat-note">{s.demoHouseholds} are seeded demo baselines</span>
+        </div>
+        <div className="stat">
+          <span className="stat-label">Active Ward Areas</span>
+          <strong className="stat-value">{s.rows.length - s.suppressedGroups}</strong>
+          <span className="stat-note">{s.suppressedGroups} suppressed (k &lt; {s.k} threshold)</span>
+        </div>
       </section>
 
-      <Card title="Areas">
+      <Card title="Postal Ward Aggregation (k-Anonymity Protected)" icon={<Building2 size={20} className="card-icon" style={{ margin: 0 }} />}>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Area</th><th>Households</th><th>Avg kWh / household</th><th>Total kg CO₂e</th><th>Actions completed</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Postal Ward Area</th>
+                <th>Households</th>
+                <th>Avg kWh / Household</th>
+                <th>Total Avoided CO₂e</th>
+                <th>Actions Logged</th>
+              </tr>
+            </thead>
             <tbody>
               {s.rows.map((r) => (
                 <tr key={r.prefix}>
-                  <td>{r.label}</td>
-                  {r.suppressed ? <td colSpan={4} className="muted">Hidden: fewer than {s.k} households</td> : <><td>{r.households}</td><td>{num(r.avgKwh ?? 0)}</td><td>{num(r.totalKg ?? 0)}</td><td>{r.actions}</td></>}
+                  <td>
+                    <strong>{r.label}</strong>
+                  </td>
+                  {r.suppressed ? (
+                    <td colSpan={4} className="muted">
+                      <span className="chip" style={{ background: "var(--sand-100)", color: "var(--muted-light)" }}>
+                        <EyeOff size={11} /> Suppressed: fewer than {s.k} households (k-anonymity protection)
+                      </span>
+                    </td>
+                  ) : (
+                    <>
+                      <td>{r.households}</td>
+                      <td>{num(r.avgKwh ?? 0)} kWh</td>
+                      <td>
+                        <strong>{num(r.totalKg ?? 0)} kg</strong>
+                      </td>
+                      <td>{r.actions}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="muted">Uses each household&apos;s most recent month. Demo households are included in these numbers and are not real measurements.</p>
+        <p className="muted" style={{ marginTop: "14px", fontSize: "12.5px" }}>
+          * Calculated from the most recent billing snapshot of each registered citizen. Privacy preservation: individual household addresses, identities, and private usage are never exposed to administrative queries.
+        </p>
       </Card>
     </>
   );

@@ -1,44 +1,105 @@
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText, Sun } from "lucide-react";
 import { SolarCalculator } from "@/components/solar/solar-calculator";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { RESOURCES } from "@/features/solar/resources";
 import { listSnapshots } from "@/services/footprint";
 
-export const metadata: Metadata = { title: "Resources" };
+export const metadata: Metadata = { title: "Actionable Resource Hub & Solar Feasibility" };
 
 export default async function ResourcesPage() {
   const user = await getCurrentUser();
   const latest = user ? (await listSnapshots(user.id)).at(-1) : undefined;
-  const rate = latest?.billAmountInr && latest.electricityKwh ? Math.round((latest.billAmountInr / latest.electricityKwh) * 100) / 100 : undefined;
+  const rate =
+    latest?.billAmountInr && latest.electricityKwh
+      ? Math.round((latest.billAmountInr / latest.electricityKwh) * 100) / 100
+      : undefined;
 
   return (
     <>
-      <p className="eyebrow">RESOURCE HUB</p>
-      <h1>From intent to rooftop</h1>
-      <p className="intro">Estimate what rooftop solar could do for your home, then follow the official steps to apply.</p>
+      <p className="eyebrow">Requirement 4 · Actionable Resource Hub</p>
+      <h1>From Intent to Rooftop</h1>
+      <p className="intro">
+        Explore rooftop solar feasibility for your property, calculate your PM Surya Ghar central subsidy entitlement, and access verified government energy transition resources.
+      </p>
 
-      <Card title="Rooftop solar estimate">
-        <SolarCalculator defaultMonthlyKwh={latest?.electricityKwh} defaultTariff={rate} signedIn={Boolean(user)} />
+      <Card
+        title="PM Surya Ghar: Muft Bijli Yojana Feasibility Engine"
+        className="card-accent-surya"
+        icon={<Sun size={22} className="card-icon surya" style={{ margin: 0 }} />}
+      >
+        <div style={{ marginBottom: "18px" }}>
+          <p style={{ margin: 0, color: "var(--muted-text)" }}>
+            Calculates optimal kWp capacity, annual kWh generation, financial payback, and direct government capital subsidy based on official Ministry of New and Renewable Energy (MNRE) guidelines.
+          </p>
+        </div>
+        <SolarCalculator
+          defaultMonthlyKwh={latest?.electricityKwh}
+          defaultTariff={rate}
+          signedIn={Boolean(user)}
+        />
       </Card>
 
-      <Card title="What happens next">
-        <ol className="steps">
-          <li><strong>Check eligibility and subsidy</strong> on the national portal. Rules and amounts can change.</li>
-          <li><strong>Register and apply</strong> through your distribution company (DISCOM) for a net-metering connection.</li>
-          <li><strong>Choose an empanelled installer</strong> from the portal, and ask for a site survey covering shade and roof strength.</li>
-          <li><strong>Inspection and commissioning</strong> by the DISCOM, then claim the subsidy.</li>
-        </ol>
-      </Card>
+      <div style={{ margin: "44px 0 16px" }}>
+        <h2 className="section-title" style={{ margin: 0 }}>
+          Official 4-Step Solar Roadmap
+        </h2>
+        <p className="muted" style={{ margin: "4px 0 20px" }}>
+          How to turn your estimate into a commissioned net-metered rooftop installation.
+        </p>
+      </div>
 
-      <h2 className="section-title">Official links</h2>
+      <div className="grid four">
+        <Card title="1. Eligibility & Portal" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>01</span>}>
+          <p style={{ fontSize: "14px" }}>
+            Register on the national <strong>PM Surya Ghar</strong> portal with your DISCOM consumer account number and mobile number.
+          </p>
+        </Card>
+        <Card title="2. Technical Approval" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>02</span>}>
+          <p style={{ fontSize: "14px" }}>
+            Submit an online net-metering application. Your local DISCOM reviews transformer capacity and issues technical feasibility approval (TFR).
+          </p>
+        </Card>
+        <Card title="3. Empanelled Installer" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>03</span>}>
+          <p style={{ fontSize: "14px" }}>
+            Select an authorized vendor from the portal roster. The installer performs a physical survey covering shade, orientation, and structural integrity.
+          </p>
+        </Card>
+        <Card title="4. Inspection & DBT Subsidy" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>04</span>}>
+          <p style={{ fontSize: "14px" }}>
+            DISCOM inspects the plant, installs a bidirectional net meter, and issues a commissioning certificate. The central subsidy is deposited directly to your bank.
+          </p>
+        </Card>
+      </div>
+
+      <div style={{ margin: "44px 0 16px" }}>
+        <h2 className="section-title" style={{ margin: 0 }}>
+          Curated Official Resources
+        </h2>
+        <p className="muted" style={{ margin: "4px 0 20px" }}>
+          Direct links to authoritative schemes, databases, and policy guidelines.
+        </p>
+      </div>
+
       <div className="grid">
         {RESOURCES.map((r) => (
-          <Card key={r.url} title={r.title}>
-            <p>{r.description}</p>
-            <a className="text-link" href={r.url} target="_blank" rel="noopener noreferrer">{r.provider} <ExternalLink size={14} aria-hidden="true" /></a>
-            <p className="muted">Link checked {r.checkedOn}</p>
+          <Card key={r.url} title={r.title} icon={<FileText size={18} className="card-icon" style={{ margin: 0 }} />}>
+            <p style={{ fontSize: "14px", minHeight: "44px" }}>{r.description}</p>
+            <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <a
+                className="text-link"
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "13.5px" }}
+              >
+                {r.provider} <ExternalLink size={13} aria-hidden="true" />
+              </a>
+              <span className="muted" style={{ fontSize: "11.5px" }}>
+                Checked {r.checkedOn}
+              </span>
+            </div>
           </Card>
         ))}
       </div>

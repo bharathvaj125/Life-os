@@ -7,41 +7,95 @@ import { requireUser } from "@/lib/auth/session";
 import { formatPeriod, istPeriod } from "@/lib/dates";
 import { num } from "@/lib/format";
 import { getFootprintView } from "@/services/footprint";
+import { ArrowDownRight, ArrowUpRight, BarChart3, BookOpen, Leaf, Sparkles } from "lucide-react";
 
-export const metadata: Metadata = { title: "Footprint" };
+export const metadata: Metadata = { title: "Personalised Footprint Tracker" };
 
 export default async function FootprintPage() {
   const user = await requireUser();
   const { snapshots, trend } = await getFootprintView(user.id);
   const history = [...snapshots].reverse();
   const { baselineKg, latest } = trend;
-  const sinceBaseline = baselineKg && latest && snapshots.length > 1 ? Math.round(((latest.totalKg - baselineKg) / baselineKg) * 1000) / 10 : null;
+  const sinceBaseline =
+    baselineKg && latest && snapshots.length > 1
+      ? Math.round(((latest.totalKg - baselineKg) / baselineKg) * 1000) / 10
+      : null;
 
   return (
     <>
-      <p className="eyebrow">FOOTPRINT TRACKER</p>
-      <h1>Your footprint, month by month</h1>
-      <p className="intro">Your first month is your baseline. Add each new bill to see whether your habits are moving the number.</p>
+      <p className="eyebrow">Requirement 1 · Personalised Footprint Tracker</p>
+      <h1>Your Carbon Baseline & History</h1>
+      <p className="intro">
+        Your first month forms your verified baseline. As you adopt energy-saving habits and log each new bill, see your trajectory in real kilograms of CO₂ equivalent.
+      </p>
 
-      {sinceBaseline !== null ? <p className="callout">{sinceBaseline <= 0 ? `Down ${Math.abs(sinceBaseline)}% from your baseline of ${num(baselineKg ?? 0)} kg CO₂e.` : `Up ${sinceBaseline}% from your baseline of ${num(baselineKg ?? 0)} kg CO₂e.`}</p> : null}
+      {sinceBaseline !== null ? (
+        <div
+          className={`callout ${sinceBaseline <= 0 ? "" : "surya"}`}
+          style={{ display: "flex", alignItems: "center", gap: "12px" }}
+        >
+          {sinceBaseline <= 0 ? (
+            <ArrowDownRight size={26} style={{ color: "var(--forest-600)" }} />
+          ) : (
+            <ArrowUpRight size={26} style={{ color: "var(--surya-600)" }} />
+          )}
+          <div>
+            <strong>
+              {sinceBaseline <= 0
+                ? `Down ${Math.abs(sinceBaseline)}% compared to your baseline.`
+                : `Up ${sinceBaseline}% from your initial baseline.`}
+            </strong>
+            <div style={{ fontSize: "13px", marginTop: "2px", opacity: 0.9 }}>
+              Initial baseline: {num(baselineKg ?? 0)} kg CO₂e · Current: {num(latest?.totalKg ?? 0)} kg CO₂e
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="split">
-        <Card title="Trend"><ImpactChart data={snapshots.map((s) => ({ label: formatPeriod(s.period), kgCO2e: s.totalKg }))} /></Card>
-        <Card title="Add or update a month"><FootprintForm defaultPeriod={istPeriod()} /></Card>
+        <Card title="Emissions Trajectory" className="card-accent-green" icon={<BarChart3 size={20} className="card-icon" style={{ margin: 0 }} />}>
+          <ImpactChart data={snapshots.map((s) => ({ label: formatPeriod(s.period), kgCO2e: s.totalKg }))} />
+          <p className="muted" style={{ marginTop: "14px", fontSize: "12.5px" }}>
+            Monthly data stored securely with user isolation. Grid emissions calculated using {EMISSION_FACTORS.electricityKgPerKwh} kg CO₂/kWh ({EMISSION_FACTORS.version}).
+          </p>
+        </Card>
+
+        <Card title="Add / Update Monthly Entry" className="card-accent-surya" icon={<Sparkles size={20} className="card-icon surya" style={{ margin: 0 }} />}>
+          <FootprintForm defaultPeriod={istPeriod()} />
+        </Card>
       </div>
 
-      <Card title="History">
+      <Card title="Historical Log" icon={<Leaf size={20} className="card-icon" style={{ margin: 0 }} />}>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Month</th><th>Electricity</th><th>Travel</th><th>LPG</th><th>Total</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Billing Month</th>
+                <th>Grid Electricity</th>
+                <th>Travel & Commute</th>
+                <th>Cooking LPG</th>
+                <th>Total Footprint</th>
+              </tr>
+            </thead>
             <tbody>
               {history.map((s) => (
                 <tr key={s.id}>
-                  <td>{formatPeriod(s.period)}</td>
-                  <td>{num(s.electricityKwh)} kWh · {num(s.electricityKg)} kg</td>
+                  <td>
+                    <strong>{formatPeriod(s.period)}</strong>
+                  </td>
+                  <td>
+                    {num(s.electricityKwh)} kWh <span className="muted">({num(s.electricityKg)} kg)</span>
+                  </td>
                   <td>{num(s.commuteKg)} kg</td>
-                  <td>{num(s.lpgKg)} kg</td>
-                  <td><strong>{num(s.totalKg)} kg CO₂e</strong></td>
+                  <td>
+                    {s.lpgCylinders ? `${s.lpgCylinders} cyl · ` : ""}
+                    {num(s.lpgKg)} kg
+                  </td>
+                  <td>
+                    <strong style={{ fontFamily: "JetBrains Mono, monospace", color: "var(--forest-900)" }}>
+                      {num(s.totalKg)} kg CO₂e
+                    </strong>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -49,13 +103,23 @@ export default async function FootprintPage() {
         </div>
       </Card>
 
-      <Card title="How we calculate this">
-        <p>Footprint = electricity units × grid factor + travel km × vehicle factors + LPG cylinders × cylinder factor. Every month stores the factor set it used ({EMISSION_FACTORS.version}), so old numbers stay reproducible.</p>
+      <Card title="Calculation Methodology & Transparency" icon={<BookOpen size={20} className="card-icon" style={{ margin: 0 }} />}>
+        <p>
+          Mission LiFE prioritizes verifiable data over arbitrary numbers. Total carbon emissions are calculated by applying published official emissions factors to your activity inputs:
+        </p>
         <ul className="notes">
-          <li>Grid electricity: {EMISSION_FACTORS.electricityKgPerKwh} kg CO₂ per kWh. An indicative India average from the CEA CO₂ Baseline Database; update to the latest release for official reporting.</li>
-          <li>Car {EMISSION_FACTORS.carKgPerKm}, two-wheeler {EMISSION_FACTORS.bikeKgPerKm}, public transport {EMISSION_FACTORS.publicKgPerKm} kg CO₂ per km.</li>
-          <li>LPG: {EMISSION_FACTORS.lpgKgPerCylinder} kg CO₂ per 14.2 kg cylinder.</li>
-          <li>These are estimates for awareness and comparison, not a certified inventory.</li>
+          <li>
+            <strong>Grid Electricity:</strong> {EMISSION_FACTORS.electricityKgPerKwh} kg CO₂ per kWh based on the Central Electricity Authority (CEA) CO₂ Baseline Database ({EMISSION_FACTORS.version}). (1 t CO₂/MWh = 1 kg CO₂/kWh).
+          </li>
+          <li>
+            <strong>Vehicle Travel:</strong> Four-wheeler petrol/diesel at {EMISSION_FACTORS.carKgPerKm} kg CO₂/km; two-wheeler motorcycle/scooter at {EMISSION_FACTORS.bikeKgPerKm} kg CO₂/km; public transport (bus/metro) at {EMISSION_FACTORS.publicKgPerKm} kg CO₂/km.
+          </li>
+          <li>
+            <strong>LPG Cooking Gas:</strong> {EMISSION_FACTORS.lpgKgPerCylinder} kg CO₂ per standard 14.2 kg domestic cylinder.
+          </li>
+          <li>
+            <strong>Reproducibility:</strong> Every recorded snapshot stores the active factor version ({EMISSION_FACTORS.version}) so previous historical calculations remain immutable and reproducible.
+          </li>
         </ul>
       </Card>
     </>

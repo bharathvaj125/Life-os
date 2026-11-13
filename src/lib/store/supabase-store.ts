@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { BillProof, Challenge, TaskProof, Completion, Membership, Snapshot, User, Vendor } from "@/types";
+import type { BillProof, Challenge, QuoteMessage, QuoteRequest, TaskProof, Completion, Membership, Snapshot, User, Vendor } from "@/types";
 import type { Repository } from "./repository";
 
 /**
@@ -39,13 +39,16 @@ const fromCompletion = (c: Completion) => ({ id: c.id, user_id: c.userId, task_i
 
 const toChallenge = (r: Row): Challenge => ({ id: r.id as string, title: r.title as string, description: r.description as string, region: r.region as string, regionPrefix: (r.region_prefix as string | null) ?? null, metric: r.metric as Challenge["metric"], target: Number(r.target), startsOn: r.starts_on as string, endsOn: r.ends_on as string });
 
-const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, ownerUserId: (r.owner_user_id as string | null) ?? undefined, createdAt: r.created_at as string });
-const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, owner_user_id: v.ownerUserId ?? null, created_at: v.createdAt });
+const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, ownerUserId: (r.owner_user_id as string | null) ?? undefined, listingKind: ((r.listing_kind as string | null) ?? undefined) as Vendor["listingKind"], sourceUrl: (r.source_url as string | null) ?? undefined, verifiedOn: (r.verified_on as string | null) ?? undefined, verifiedNote: (r.verified_note as string | null) ?? undefined, createdAt: r.created_at as string });
+const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, owner_user_id: v.ownerUserId ?? null, listing_kind: v.listingKind ?? "installer", source_url: v.sourceUrl ?? null, verified_on: v.verifiedOn ?? null, verified_note: v.verifiedNote ?? null, created_at: v.createdAt });
 
 const toProof = (r: Row): BillProof => ({ id: r.id as string, userId: r.user_id as string, period: r.period as string, consumerHash: r.consumer_hash as string, consumerLast4: r.consumer_last4 as string, previousReading: Number(r.previous_reading), currentReading: Number(r.current_reading), multiplier: Number(r.multiplier), units: Number(r.units), amountInr: r.amount_inr == null ? undefined : Number(r.amount_inr), source: r.source as BillProof["source"], createdAt: r.created_at as string });
 const fromProof = (p: BillProof) => ({ id: p.id, user_id: p.userId, period: p.period, consumer_hash: p.consumerHash, consumer_last4: p.consumerLast4, previous_reading: p.previousReading, current_reading: p.currentReading, multiplier: p.multiplier, units: p.units, amount_inr: p.amountInr ?? null, source: p.source, created_at: p.createdAt });
 
 const toTaskProof = (r: Row): TaskProof => ({ id: r.id as string, userId: r.user_id as string, taskId: r.task_id as string, status: r.status as TaskProof["status"], image: (r.image as string | null) ?? null, createdAt: r.created_at as string, reviewedAt: (r.reviewed_at as string | null) ?? undefined });
+
+const toQuote = (r: Row): QuoteRequest => ({ id: r.id as string, citizenId: r.citizen_id as string, vendorId: r.vendor_id as string, topic: r.topic as QuoteRequest["topic"], status: r.status as QuoteRequest["status"], createdAt: r.created_at as string, updatedAt: r.updated_at as string });
+const toMessage = (r: Row): QuoteMessage => ({ id: r.id as string, requestId: r.request_id as string, authorId: r.author_id as string, authorRole: r.author_role as QuoteMessage["authorRole"], body: r.body as string, createdAt: r.created_at as string });
 
 export function supabaseStore(): Repository {
   return {
@@ -158,6 +161,50 @@ export function supabaseStore(): Repository {
       return data ? toTaskProof(data) : null;
     },
 
+    async createQuote(request, firstMessage) {
+      const { error } = await db().from("quote_requests").insert({ id: request.id, citizen_id: request.citizenId, vendor_id: request.vendorId, topic: request.topic, status: request.status, created_at: request.createdAt, updated_at: request.updatedAt });
+      if (error) throw error;
+      const { error: e2 } = await db().from("quote_messages").insert({ id: firstMessage.id, request_id: firstMessage.requestId, author_id: firstMessage.authorId, author_role: firstMessage.authorRole, body: firstMessage.body, created_at: firstMessage.createdAt });
+      if (e2) throw e2;
+    },
+    async listQuotes(filter) {
+      let query = db().from("quote_requests").select("*");
+      if (filter?.citizenId) query = query.eq("citizen_id", filter.citizenId);
+      if (filter?.vendorIds) {
+        if (filter.vendorIds.length === 0) return [];
+        query = query.in("vendor_id", filter.vendorIds);
+      }
+      const { data, error } = await query.order("updated_at", { ascending: false }).limit(500);
+      if (error) throw error;
+      return data.map(toQuote);
+    },
+    async getQuote(id) {
+      const { data, error } = await db().from("quote_requests").select("*").eq("id", id).maybeSingle();
+      if (error) throw error;
+      return data ? toQuote(data) : null;
+    },
+    async listMessages(requestIds) {
+      if (requestIds.length === 0) return [];
+      const { data, error } = await db().from("quote_messages").select("*").in("request_id", requestIds).order("created_at", { ascending: true }).limit(5000);
+      if (error) throw error;
+      return data.map(toMessage);
+    },
+    async addMessage(message) {
+      const { error } = await db().from("quote_messages").insert({ id: message.id, request_id: message.requestId, author_id: message.authorId, author_role: message.authorRole, body: message.body, created_at: message.createdAt });
+      if (error) throw error;
+      const { error: e2 } = await db().from("quote_requests").update({ updated_at: message.createdAt }).eq("id", message.requestId);
+      if (e2) throw e2;
+    },
+    async setQuoteStatus(id, status) {
+      const { data, error } = await db().from("quote_requests").update({ status, updated_at: new Date().toISOString() }).eq("id", id).select("*").maybeSingle();
+      if (error) throw error;
+      return data ? toQuote(data) : null;
+    },
+    async setVendorVerification(id, verification) {
+      const { data, error } = await db().from("vendors").update({ verified_on: verification?.verifiedOn ?? null, verified_note: verification?.verifiedNote ?? null }).eq("id", id).select("*").maybeSingle();
+      if (error) throw error;
+      return data ? toVendor(data) : null;
+    },
     async listVendors() {
       return (await fetchAll("vendors")).map(toVendor);
     },

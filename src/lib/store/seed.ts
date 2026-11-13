@@ -69,7 +69,26 @@ export function buildSeed(now: Date): StoreData {
     }
   });
 
-  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i), vendors: buildSampleVendors(createdAt), credentials: [], billProofs: [], taskProofs: [] };
+  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i), vendors: [...buildPublicDirectory(createdAt), ...buildSampleVendors(createdAt)], credentials: [], billProofs: [], taskProofs: [], quoteRequests: [], quoteMessages: [] };
+}
+
+/**
+ * Real public bodies and companies that a household may need, taken from their own public websites. They are
+ * not LiFE-OS partners, no phone number or address is invented, and each one links to its source so anyone can
+ * check it. An administrator can still mark a company as checked against an official empanelment list.
+ */
+export function buildPublicDirectory(createdAt: string): Vendor[] {
+  const base = { status: "approved" as const, isSample: false, createdAt };
+  const official = { ...base, listingKind: "official" as const };
+  return [
+    { ...official, id: "public-pgvcl", name: "PGVCL (Paschim Gujarat Vij Company)", city: "Rajkot", pincode: "360004", services: ["rooftop-solar"], website: "https://pgvcl.com/solar_rooftop", sourceUrl: "https://pgvcl.com/solar_rooftop", empanelmentClaim: "Electricity company for Saurashtra and Kutch: net metering and empanelled vendor list" },
+    { ...official, id: "public-dgvcl", name: "DGVCL (Dakshin Gujarat Vij Company)", city: "Surat", pincode: "395006", services: ["rooftop-solar"], website: "https://www.dgvcl.com", sourceUrl: "https://www.dgvcl.com", empanelmentClaim: "Electricity company for South Gujarat: net metering and empanelled vendor list" },
+    { ...official, id: "public-mgvcl", name: "MGVCL (Madhya Gujarat Vij Company)", city: "Vadodara", pincode: "390007", services: ["rooftop-solar"], website: "https://www.mgvcl.com", sourceUrl: "https://www.mgvcl.com", empanelmentClaim: "Electricity company for Central Gujarat: net metering and empanelled vendor list" },
+    { ...official, id: "public-ugvcl", name: "UGVCL (Uttar Gujarat Vij Company)", city: "Mehsana", pincode: "384001", services: ["rooftop-solar"], website: "https://www.ugvcl.com", sourceUrl: "https://www.ugvcl.com", empanelmentClaim: "Electricity company for North Gujarat: net metering and empanelled vendor list" },
+    { ...official, id: "public-geda", name: "GEDA (Gujarat Energy Development Agency)", city: "Gandhinagar", pincode: "382011", services: ["rooftop-solar", "solar-water-heater", "energy-audit"], website: "https://geda.gujarat.gov.in", sourceUrl: "https://geda.gujarat.gov.in", empanelmentClaim: "State agency for renewable energy programmes" },
+    { ...base, listingKind: "company" as const, id: "public-torrent-power", name: "Torrent Power", city: "Ahmedabad", pincode: "380015", services: ["rooftop-solar"], website: "https://www.torrentpower.com", sourceUrl: "https://www.torrentpower.com", empanelmentClaim: "Electricity company for Ahmedabad, Gandhinagar and Surat; rooftop solar information on its website" },
+    { ...base, listingKind: "company" as const, id: "public-heaven-green", name: "Heaven Green Energy", city: "Surat", pincode: "394101", services: ["rooftop-solar"], website: "https://www.heavengreenenergy.com", sourceUrl: "https://www.heavengreenenergy.com/contact", empanelmentClaim: "Rooftop solar company based in Surat with offices in Ahmedabad and Vadodara (from its own website)" },
+  ];
 }
 
 /**

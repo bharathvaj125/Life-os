@@ -2,6 +2,7 @@ import type { Equipment, RoofAccess, Snapshot, TaskCategory } from "@/types";
 import { istDate, istHour } from "@/lib/dates";
 import { EMISSION_FACTORS } from "./emission-factors";
 import type { Weather } from "./weather";
+import { getTask, taskApplies } from "@/features/gamification/tasks";
 
 export interface Nudge {
   id: string;
@@ -15,7 +16,24 @@ export interface Nudge {
   /** Only set when the user entered a bill amount: uses their own rupees-per-unit, not an assumed tariff. */
   savingInrPerMonth?: number;
   href?: string;
+  /** The task in the Actions list that turns this tip into points, when the home can do it. */
+  reward?: { taskId: string; title: string; points: number };
 }
+
+/** Which task each tip leads to. A tip with no task is advice only and earns no points. */
+const TASK_FOR_NUDGE: Record<string, string> = {
+  "ac-setpoint": "ac-setpoint",
+  "sun-dry": "air-dry",
+  "shift-car-km": "transit-day",
+  "pressure-cooker": "pressure-cook",
+  "ev-night": "ev-night-charge",
+  "use-your-solar": "solar-selfuse",
+  "geyser-timer": "geyser-short",
+  "pump-midday": "pump-midday",
+  "solar-look": "solar-estimate",
+  standby: "standby-off",
+  "peak-now": "peak-shift",
+};
 
 export interface NudgeContext {
   householdSize: number;
@@ -144,5 +162,9 @@ export function generateNudges({ householdSize, snapshots, now, weather, equipme
     out.push({ id: "add-next-month", category: "energy", priority: 20, title: "Add next month to see your trend", why: "A trend needs at least two months.", action: "Log your next bill when it arrives.", href: "/footprint" });
   }
 
+  for (const n of out) {
+    const task = getTask(TASK_FOR_NUDGE[n.id] ?? "");
+    if (task && taskApplies(task, equipment, roofAccess)) n.reward = { taskId: task.id, title: task.title, points: task.points };
+  }
   return out.sort((a, b) => b.priority - a.priority);
 }

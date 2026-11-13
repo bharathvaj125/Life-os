@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RoofMeasure } from "@/components/solar/roof-measure";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Stat } from "@/components/ui/field";
 import type { SolarEstimate } from "@/lib/calculations/solar";
@@ -35,9 +36,20 @@ interface Props {
   defaultTariff?: number;
   defaultPincode?: string;
   signedIn: boolean;
+  /** Where to start the roof-measuring map (the household's city). */
+  roofCentre?: [number, number];
 }
 
-export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, defaultPincode, signedIn }: Props) {
+/** Puts a measured area into the roof box, the way typing it would, so the form and its checks see it. */
+function fillRoofArea(areaM2: number) {
+  const input = document.getElementById("roofAreaM2") as HTMLInputElement | null;
+  if (!input) return;
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, String(areaM2));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, defaultPincode, signedIn, roofCentre }: Props) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<SolarEstimate | null>(null);
@@ -64,6 +76,11 @@ export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, defaultPinco
 
   return (
     <>
+      {roofCentre ? (
+        <div style={{ marginBottom: "22px" }}>
+          <RoofMeasure centre={roofCentre} onUse={fillRoofArea} />
+        </div>
+      ) : null}
       <form onSubmit={submit} className="form" noValidate>
         <div className="form-grid">
           <Field

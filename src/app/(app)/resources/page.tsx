@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExternalLink, FileText, Sun } from "lucide-react";
 import { SolarCalculator } from "@/components/solar/solar-calculator";
 import { Card } from "@/components/ui/card";
+import { locateByPincode } from "@/lib/maps/locate";
 import { requireUser } from "@/lib/auth/session";
 import { RESOURCES } from "@/features/solar/resources";
 import { listSnapshots } from "@/services/footprint";
@@ -53,6 +54,7 @@ export default async function ResourcesPage() {
           defaultTariff={rate}
           defaultPincode={user.pincode}
           signedIn
+          roofCentre={locateByPincode(user.pincode, "roof") ?? [22.6, 71.5]}
         />
       </Card>
 

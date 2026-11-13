@@ -65,6 +65,16 @@ export const proofSchema = z.object({
 });
 export const proofReviewSchema = z.object({ decision: z.enum(["approved", "rejected"]) });
 
+/** A household asking one installer for help. The first message is the request itself. */
+export const quoteRequestSchema = z.object({
+  vendorId: z.string().trim().min(1).max(80),
+  topic: z.enum(VENDOR_SERVICE_IDS),
+  message: z.string().trim().min(10, "Say a little more, at least 10 characters").max(1000, "Keep it under 1000 characters"),
+});
+export const quoteMessageSchema = z.object({ body: z.string().trim().min(1, "Write a message first").max(1000, "Keep it under 1000 characters") });
+export const quoteStatusSchema = z.object({ status: z.literal("closed") });
+export const vendorVerifySchema = z.object({ note: z.string().trim().min(5, "Say where you checked, at least 5 characters").max(200, "Keep it under 200 characters") });
+
 export const vendorReviewSchema = z.object({ decision: z.enum(["approved", "rejected"]) });
 
 const flag = z.boolean();

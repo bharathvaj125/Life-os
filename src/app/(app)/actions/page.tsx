@@ -117,7 +117,7 @@ export default async function ActionsPage() {
         </h3>
         <div className="grid">
           {dailyTasks.map((t) => (
-            <Card key={t.id} title={t.title}>
+            <Card key={t.id} id={`task-${t.id}`} title={t.title}>
               <div className="badge-row">
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>
@@ -140,7 +140,7 @@ export default async function ActionsPage() {
         </h3>
         <div className="grid">
           {weeklyTasks.concat(onceTasks).map((t) => (
-            <Card key={t.id} title={t.title}>
+            <Card key={t.id} id={`task-${t.id}`} title={t.title}>
               <div className="badge-row">
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>

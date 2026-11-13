@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { StoreData } from "@/types";
 import type { Repository } from "./repository";
-import { buildSeed } from "./seed";
+import { buildPublicDirectory, buildSeed } from "./seed";
 
 const dir = () => process.env.LIFEOS_DATA_DIR ?? (process.env.VERCEL ? os.tmpdir() : path.join(process.cwd(), ".data"));
 const file = () => path.join(dir(), "lifeos.json");
@@ -25,6 +25,11 @@ function load(): Promise<StoreData> {
       data.credentials ??= [];
       data.billProofs ??= [];
       data.taskProofs ??= [];
+      data.quoteRequests ??= [];
+      data.quoteMessages ??= [];
+      // Public directory entries added after a data file was first written are filled in, once each.
+      const known = new Set(data.vendors.map((v) => v.id));
+      for (const v of buildPublicDirectory(new Date().toISOString())) if (!known.has(v.id)) data.vendors.push(v);
       for (const u of data.users) u.role ??= "citizen";
       return data;
     } catch {
@@ -156,6 +161,44 @@ export const fileStore: Repository = {
     });
   },
 
+  async createQuote(request, firstMessage) {
+    await mutate((d) => { d.quoteRequests.push(request); d.quoteMessages.push(firstMessage); });
+  },
+  async listQuotes(filter) {
+    return (await load()).quoteRequests.filter((q) => (!filter?.citizenId || q.citizenId === filter.citizenId) && (!filter?.vendorIds || filter.vendorIds.includes(q.vendorId)));
+  },
+  async getQuote(id) {
+    return (await load()).quoteRequests.find((q) => q.id === id) ?? null;
+  },
+  async listMessages(requestIds) {
+    const wanted = new Set(requestIds);
+    return (await load()).quoteMessages.filter((m) => wanted.has(m.requestId)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  },
+  async addMessage(message) {
+    await mutate((d) => {
+      d.quoteMessages.push(message);
+      const q = d.quoteRequests.find((r) => r.id === message.requestId);
+      if (q) q.updatedAt = message.createdAt;
+    });
+  },
+  async setQuoteStatus(id, status) {
+    return mutate((d) => {
+      const q = d.quoteRequests.find((r) => r.id === id);
+      if (!q) return null;
+      q.status = status;
+      q.updatedAt = new Date().toISOString();
+      return q;
+    });
+  },
+  async setVendorVerification(id, verification) {
+    return mutate((d) => {
+      const v = d.vendors.find((x) => x.id === id);
+      if (!v) return null;
+      v.verifiedOn = verification?.verifiedOn;
+      v.verifiedNote = verification?.verifiedNote;
+      return v;
+    });
+  },
   async listVendors() {
     return (await load()).vendors;
   },

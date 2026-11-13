@@ -1,4 +1,4 @@
-import type { BillProof, Challenge, TaskProof, TaskProofStatus, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
+import type { BillProof, Challenge, QuoteMessage, QuoteRequest, QuoteStatus, TaskProof, TaskProofStatus, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
 
 /**
  * Persistence boundary. Services depend only on this interface, so the local JSON store used for
@@ -37,6 +37,17 @@ export interface Repository {
   listTaskProofs(filter?: { userId?: string; status?: TaskProofStatus }): Promise<TaskProof[]>;
   /** Records the decision and deletes the photo. Returns null when the id does not exist. */
   reviewTaskProof(id: string, status: Exclude<TaskProofStatus, "pending">, reviewedAt: string): Promise<TaskProof | null>;
+
+  /** Creates a request and its first message together. */
+  createQuote(request: QuoteRequest, firstMessage: QuoteMessage): Promise<void>;
+  listQuotes(filter?: { citizenId?: string; vendorIds?: string[] }): Promise<QuoteRequest[]>;
+  getQuote(id: string): Promise<QuoteRequest | null>;
+  /** Messages for the given requests, oldest first. */
+  listMessages(requestIds: string[]): Promise<QuoteMessage[]>;
+  addMessage(message: QuoteMessage): Promise<void>;
+  setQuoteStatus(id: string, status: QuoteStatus): Promise<QuoteRequest | null>;
+  /** Records (or clears, with null) that an administrator checked a vendor against an official list. */
+  setVendorVerification(id: string, verification: { verifiedOn: string; verifiedNote: string } | null): Promise<Vendor | null>;
 
   listVendors(): Promise<Vendor[]>;
   addVendor(vendor: Vendor): Promise<Vendor>;

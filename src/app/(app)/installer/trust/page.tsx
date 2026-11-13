@@ -19,6 +19,7 @@ export default async function InstallerTrustPage() {
     { ok: Boolean(listing?.empanelmentClaim), label: "Your registration or empanelment ID is quoted" },
     { ok: (listing?.services.length ?? 0) > 0, label: "Your services are chosen" },
     { ok: listing?.status === "approved", label: "An administrator has approved it" },
+    { ok: Boolean(listing?.verifiedOn), label: "An administrator has found you on an official list" },
   ];
   const done = checks.filter((c) => c.ok).length;
 

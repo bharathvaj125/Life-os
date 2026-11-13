@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { BadgeCheck, ExternalLink, MapPin, Phone, Search, ShieldAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { LeafletMap, type MapMarker } from "@/components/maps/leaflet-map";
+import Link from "next/link";
+import { ExternalLink, MessageSquare, ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { OFFICIAL_VENDOR_CHECKS, VENDOR_SERVICES, VENDOR_SERVICE_IDS, VERIFY_STEPS, serviceLabel } from "@/features/vendors/catalog";
+import { VendorExplorer, type ExplorerVendor } from "@/components/vendors/vendor-explorer";
+import { OFFICIAL_VENDOR_CHECKS, VENDOR_SERVICE_IDS, VERIFY_STEPS } from "@/features/vendors/catalog";
 import { requireUser } from "@/lib/auth/session";
 import { locateByPincode } from "@/lib/maps/locate";
 import { listApprovedVendors } from "@/services/vendors";
@@ -11,31 +11,36 @@ import type { VendorService } from "@/types";
 
 export const metadata: Metadata = { title: "Sustainable Energy Vendor Directory" };
 
-export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ service?: string; place?: string }> }) {
+export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ service?: string }> }) {
   const user = await requireUser();
-  const { service: rawService, place } = await searchParams;
-  const service = VENDOR_SERVICE_IDS.includes(rawService as VendorService) ? (rawService as VendorService) : undefined;
-  const vendors = await listApprovedVendors({ service, place });
-  const filtered = Boolean(service || place?.trim());
-  const markers: MapMarker[] = vendors.flatMap((v) => {
+  const { service: rawService } = await searchParams;
+  const initialService = VENDOR_SERVICE_IDS.includes(rawService as VendorService) ? (rawService as VendorService) : undefined;
+  const all = await listApprovedVendors();
+  const vendors: ExplorerVendor[] = all.flatMap((v): ExplorerVendor[] => {
     const position = locateByPincode(v.pincode, v.id);
     if (!position) return [];
-    return [{ id: v.id, position, kind: "pin" as const, tone: v.isSample ? ("grey" as const) : ("amber" as const), title: v.name, lines: [`${v.city} · ${v.pincode}`, v.services.map(serviceLabel).join(", "), ...(v.isSample ? ["Sample listing"] : [])], link: v.website && !v.isSample ? { href: v.website, text: "Website" } : undefined }];
+    // The demo installer account owns its listing, so it can take a request even though it is a demo.
+    const demo = v.isSample && Boolean(v.ownerUserId);
+    const kind = v.isSample && !demo ? "sample" : (v.listingKind ?? "installer");
+    return [{ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, kind, phone: v.phone, website: v.website, claim: v.empanelmentClaim, demo, sourceUrl: v.sourceUrl, verifiedOn: v.verifiedOn, verifiedNote: v.verifiedNote, canRequest: kind === "installer" && Boolean(v.ownerUserId), position }];
   });
-  const here = locateByPincode(user.pincode, "you");
-  if (here) markers.push({ id: "you", position: here, kind: "bubble", tone: "you", radius: 9, title: "Your area", lines: [`PIN ${user.pincode}`] });
+  const home = locateByPincode(user.pincode, "you") ?? ([22.6, 71.5] as [number, number]);
 
   return (
     <>
       <p className="eyebrow">Requirement 4 · Actionable Resource Hub</p>
       <h1>Find a Sustainable Energy Vendor</h1>
       <p className="intro">
-        Installers and suppliers for rooftop solar, solar water heaters, EV charging, energy audits and efficient appliances. Installers list themselves and an administrator reviews each listing before it appears here.
+        Search by PIN code or place, or use your location. The nearest come first. Installers register here and an administrator reviews each listing; official bodies and companies are listed from their own public websites. Registered installers can take a quote request and reply to you in a conversation.
       </p>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", margin: "0 0 18px" }}>
+        <Link className="button button-outline" href="/quotes"><MessageSquare size={15} aria-hidden="true" /> My quote requests</Link>
+      </div>
 
       <Card title="Verify before you pay" icon={<ShieldAlert size={20} className="card-icon surya" style={{ margin: 0 }} />} className="card-accent-surya">
         <p style={{ marginTop: 0 }}>
-          A listing here is a starting point, not an endorsement. For rooftop solar and the central subsidy, only vendors on the official lists qualify.
+          A listing here is a starting point, not an endorsement. Anyone can claim to be an empanelled installer, so a claim is not proof. Where an administrator has found an installer on an official list, the card says so and shows the date. Otherwise, check it yourself.
         </p>
         <ol className="notes">
           {VERIFY_STEPS.map((step) => (
@@ -51,77 +56,8 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         </div>
       </Card>
 
-      <form method="get" style={{ margin: "28px 0 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", alignItems: "end" }} aria-label="Filter vendors">
-        <div className="field">
-          <label htmlFor="service">Service</label>
-          <select id="service" name="service" defaultValue={service ?? ""}>
-            <option value="">All services</option>
-            {VENDOR_SERVICES.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="place">City or PIN code</label>
-          <input id="place" name="place" defaultValue={place ?? ""} placeholder="e.g. Ahmedabad or 380" maxLength={40} />
-        </div>
-        <Button type="submit"><Search size={16} aria-hidden="true" /> Search</Button>
-        {filtered ? <a className="text-link" href="/vendors">Clear filters</a> : null}
-      </form>
-
-      <p className="muted" style={{ margin: "0 0 14px" }} aria-live="polite">
-        {vendors.length} {vendors.length === 1 ? "listing" : "listings"}{filtered ? " match your search" : ""}
-      </p>
-
-      {markers.length > 1 ? (
-        <div style={{ margin: "0 0 20px" }}>
-          <LeafletMap markers={markers} height={340} label="Map of vendor listings" />
-          <p className="muted" style={{ margin: "8px 0 0", fontSize: "12.5px" }}>Pins are placed around each business&apos;s city, not at a street address. Grey pins are sample listings.</p>
-        </div>
-      ) : null}
-
-      {vendors.length === 0 ? (
-        <Card title="No listings match yet">
-          <p style={{ margin: 0 }}>Try a wider search or another city.</p>
-        </Card>
-      ) : (
-        <div className="grid">
-          {vendors.map((v) => (
-            <Card key={v.id} title={v.name} badge={v.isSample ? <span className="chip warn">Sample listing</span> : <span className="chip"><BadgeCheck size={12} aria-hidden="true" /> Reviewed</span>}>
-              <p style={{ margin: "0 0 10px", display: "flex", gap: "6px", alignItems: "center" }}>
-                <MapPin size={15} aria-hidden="true" /> {v.city} · {v.pincode}
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
-                {v.services.map((s) => (
-                  <span key={s} className="chip">{serviceLabel(s)}</span>
-                ))}
-              </div>
-              {v.empanelmentClaim ? (
-                <p className="muted" style={{ fontSize: "13px", margin: "0 0 10px" }}>
-                  Says: &ldquo;{v.empanelmentClaim}&rdquo;. Self-declared, so check it on the official list.
-                </p>
-              ) : null}
-              {v.isSample ? (
-                <p className="muted" style={{ fontSize: "13px", margin: 0 }}>Placeholder entry for demonstration. It is not a real business.</p>
-              ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
-                  {v.phone ? (
-                    <a className="text-link" href={`tel:+91${v.phone}`}>
-                      <Phone size={13} aria-hidden="true" /> {v.phone}
-                    </a>
-                  ) : null}
-                  {v.website ? (
-                    <a className="text-link" href={v.website} target="_blank" rel="noopener noreferrer nofollow">
-                      Website <ExternalLink size={13} aria-hidden="true" />
-                    </a>
-                  ) : null}
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-
+      <div style={{ height: "24px" }} />
+      <VendorExplorer vendors={vendors} home={{ position: home, pincode: user.pincode }} initialService={initialService} />
     </>
   );
 }

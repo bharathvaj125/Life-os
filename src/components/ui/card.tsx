@@ -7,11 +7,13 @@ interface CardProps {
   action?: ReactNode;
   badge?: ReactNode;
   icon?: ReactNode;
+  /** Lets other pages link straight to this card. */
+  id?: string;
 }
 
-export function Card({ title, children, className = "", action, badge, icon }: CardProps) {
+export function Card({ title, children, className = "", action, badge, icon, id }: CardProps) {
   return (
-    <section className={`card ${className}`.trim()}>
+    <section id={id} className={`card ${className}`.trim()}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {icon}

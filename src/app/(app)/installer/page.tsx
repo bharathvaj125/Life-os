@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, Clock, MapPin, ShieldAlert, ShieldCheck, Store, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Clock, MapPin, MessageSquare, ShieldAlert, ShieldCheck, Store, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Stat } from "@/components/ui/field";
 import { serviceLabel } from "@/features/vendors/catalog";
 import { requireViewer } from "@/lib/auth/viewer";
 import { istHour } from "@/lib/dates";
 import { getDemand, getListing } from "@/services/installer";
+import { listInstallerQuotes } from "@/services/quotes";
 
 export const metadata: Metadata = { title: "Installer overview" };
 
@@ -19,7 +20,8 @@ const STATUS = {
 export default async function InstallerPage() {
   const { user } = await requireViewer("installer");
   if (!user) return null;
-  const [listing, demand] = await Promise.all([getListing(user), getDemand(user)]);
+  const [listing, demand, threads] = await Promise.all([getListing(user), getDemand(user), listInstallerQuotes(user)]);
+  const waiting = threads.filter((t) => t.waitingOnYou).length;
   const hour = istHour(new Date());
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const status = listing ? STATUS[listing.status] : null;
@@ -73,6 +75,11 @@ export default async function InstallerPage() {
         <Stat label={`Households in ${demand.areaLabel}`} value={demand.visible ? demand.households : "Hidden"} note={demand.visible ? "Using LiFE-OS" : "Shown once five or more join"} />
         <Stat label="Worth a conversation" value={demand.visible ? demand.solarFit : "Hidden"} tone={demand.visible ? "good" : undefined} note="High use, a usable roof, no solar yet" />
       </section>
+
+      <Card title="Requests from households" icon={<MessageSquare size={20} className="card-icon surya" style={{ margin: 0 }} />} className="card-accent-surya">
+        <p style={{ marginTop: 0 }}>{waiting ? `${waiting} ${waiting === 1 ? "household is" : "households are"} waiting for your reply.` : threads.length ? "You have replied to everyone." : "Households send quote requests from the vendor map once your listing is approved."}</p>
+        <Link className="button button-surya" href="/installer/requests">Open requests <ArrowUpRight size={16} aria-hidden="true" /></Link>
+      </Card>
 
       <div className="split">
         <Card title="See local demand" icon={<TrendingUp size={20} className="card-icon" style={{ margin: 0 }} />}>

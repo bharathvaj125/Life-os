@@ -133,6 +133,8 @@ export interface Membership {
 
 export type VendorService = "rooftop-solar" | "solar-water-heater" | "ev-charging" | "energy-audit" | "efficient-appliances";
 export type VendorStatus = "pending" | "approved" | "rejected";
+/** Who a directory entry is: a registered installer, an official public body, or a company listed from its own public website. */
+export type ListingKind = "installer" | "official" | "company";
 
 /** A business listed in the resource hub. Only approved listings are public. */
 export interface Vendor {
@@ -150,6 +152,35 @@ export interface Vendor {
   isSample: boolean;
   /** The installer account that manages this listing, if one does. */
   ownerUserId?: string;
+  /** Missing means a registered installer. */
+  listingKind?: ListingKind;
+  /** Where a public-body or company entry comes from, so anyone can check it. */
+  sourceUrl?: string;
+  /** Set by an administrator after finding the business on an official empanelment list. */
+  verifiedOn?: string;
+  verifiedNote?: string;
+  createdAt: string;
+}
+
+export type QuoteStatus = "open" | "closed";
+
+/** A household asking one installer for help, with the conversation kept in QuoteMessage rows. */
+export interface QuoteRequest {
+  id: string;
+  citizenId: string;
+  vendorId: string;
+  topic: VendorService;
+  status: QuoteStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuoteMessage {
+  id: string;
+  requestId: string;
+  authorId: string;
+  authorRole: "citizen" | "installer";
+  body: string;
   createdAt: string;
 }
 
@@ -199,4 +230,6 @@ export interface StoreData {
   credentials: Credentials[];
   billProofs: BillProof[];
   taskProofs: TaskProof[];
+  quoteRequests: QuoteRequest[];
+  quoteMessages: QuoteMessage[];
 }

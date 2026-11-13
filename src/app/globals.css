@@ -2075,3 +2075,42 @@ button.hour-tile:hover, button.hour-tile:focus-visible, button.hour-tile.is-acti
 .travel-helper-grid label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
 .travel-helper-grid input { min-height: 42px; padding: 8px 10px; }
 .travel-helper small { display: block; }
+
+/* Arriving from a tip's "Earn" link: the task card is outlined for a moment. */
+.card:target { scroll-margin-top: 96px; animation: target-glow 2.4s ease; }
+@keyframes target-glow { 0%, 60% { box-shadow: 0 0 0 3px var(--surya-500); } 100% { box-shadow: var(--card-shadow); } }
+
+/* Vendor explorer */
+.vendor-search { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; align-items: end; margin-bottom: 10px; }
+.vendor-search-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.vendor-sample-toggle { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted-text); cursor: pointer; margin: 4px 0 10px; }
+.vendor-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted-text); margin: 6px 0 10px; }
+.vendor-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.vendor-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.vendor-card-head h2 { margin: 0 0 8px; font-size: 19px; }
+.vendor-card:target { animation: target-glow 2.4s ease; }
+
+/* Quote conversations */
+.quote-card { display: block; text-decoration: none; color: inherit; }
+.quote-card:hover { border-color: var(--surya-500); }
+.quote-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.quote-card-head h2 { margin: 0 0 8px; font-size: 19px; }
+.thread-list { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 12px; }
+.bubble { max-width: 82%; padding: 12px 16px; border-radius: 16px; border: 1px solid var(--sand-200); background: var(--card-bg); }
+.bubble.mine { justify-self: end; background: color-mix(in srgb, var(--surya-600) 14%, var(--card-bg)); border-color: var(--surya-100); border-bottom-right-radius: 4px; }
+.bubble.theirs { justify-self: start; border-bottom-left-radius: 4px; }
+.bubble p { margin: 4px 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-who { font-size: 12px; font-weight: 700; color: var(--muted-text); }
+.bubble time { font-size: 11.5px; color: var(--muted-light); }
+textarea { font: inherit; width: 100%; padding: 12px 14px; border: 1.5px solid var(--sand-200); border-radius: 10px; background: var(--input-bg); color: var(--foreground); resize: vertical; }
+textarea:focus { border-color: var(--surya-600); box-shadow: 0 0 0 3px rgba(217, 119, 36, 0.15); outline: none; }
+
+/* Roof measuring */
+.roof-measure { border: 1px solid var(--sand-200); border-radius: 16px; padding: 18px; background: var(--forest-50); display: grid; gap: 10px; }
+.roof-measure-head h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.roof-search { display: flex; flex-wrap: wrap; gap: 10px; }
+.roof-search input { flex: 1 1 220px; min-height: 44px; }
+.roof-result { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.roof-area { font-family: 'JetBrains Mono', monospace; font-size: 28px; color: var(--surya-700); }
+.roof-corner { width: 18px; height: 18px; border-radius: 50%; background: #FFC266; border: 3px solid #fff; box-shadow: 0 0 0 2px #D97724, 0 2px 8px rgba(0, 0, 0, 0.5); cursor: grab; }
+.roof-map .leaflet-tile-pane { filter: none !important; }

@@ -20,11 +20,13 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/community", label: "Community", icon: "Users" },
     { href: "/resources", label: "Solar", icon: "Sun" },
     { href: "/vendors", label: "Vendors", icon: "Store" },
+    { href: "/quotes", label: "Quotes", icon: "MessageSquare" },
     { href: "/profile", label: "My home", icon: "House" },
   ],
   installer: [
     { href: "/installer", label: "Overview", icon: "LayoutDashboard" },
     { href: "/installer/demand", label: "Demand", icon: "TrendingUp" },
+    { href: "/installer/requests", label: "Requests", icon: "MessageSquare" },
     { href: "/installer/listing", label: "My listing", icon: "Store" },
     { href: "/installer/trust", label: "Get verified", icon: "ShieldCheck" },
   ],

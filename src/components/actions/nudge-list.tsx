@@ -89,6 +89,11 @@ export function NudgeList({ nudges }: { nudges: Nudge[] }) {
                     Recommendation
                   </span>
                 )}
+                {n.reward ? (
+                  <span className="chip surya" style={{ fontSize: "11px", fontWeight: 700 }}>+{n.reward.points} pts</span>
+                ) : (
+                  <span className="chip" style={{ fontSize: "11px" }} title="Advice only. There is no task to tick for this one.">Tip only, no points</span>
+                )}
               </div>
             </div>
 
@@ -144,7 +149,15 @@ export function NudgeList({ nudges }: { nudges: Nudge[] }) {
                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
 
-              {n.href ? (
+              {n.reward ? (
+                <Link
+                  className="text-link"
+                  href={`/actions#task-${n.reward.taskId}`}
+                  style={{ fontSize: "13px", fontWeight: 700, background: "var(--surya-50)", padding: "4px 10px", borderRadius: "6px", border: "1px solid var(--surya-100)" }}
+                >
+                  Earn +{n.reward.points}: {n.reward.title} <ArrowRight size={13} />
+                </Link>
+              ) : n.href ? (
                 <Link
                   className="text-link"
                   href={n.href}

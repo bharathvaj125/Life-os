@@ -1,0 +1,4 @@
+# Sample bills are binary files: never rewrite their line endings
+*.pdf binary
+*.png binary
+*.jpg binary

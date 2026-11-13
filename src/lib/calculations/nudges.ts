@@ -1,6 +1,7 @@
 import type { Snapshot, TaskCategory } from "@/types";
 import { istDate, istHour } from "@/lib/dates";
 import { EMISSION_FACTORS } from "./emission-factors";
+import type { Weather } from "./weather";
 
 export interface Nudge {
   id: string;
@@ -21,12 +22,21 @@ export interface NudgeContext {
   /** Sorted by period ascending. */
   snapshots: Snapshot[];
   now: Date;
+  /** Today's forecast for the household's city. When present it drives the AC and drying nudges instead of the calendar. */
+  weather?: Weather | null;
 }
+
+/** A day at or above this maximum counts as hot enough to nudge about the AC. */
+export const HOT_DAY_C = 35;
+/** A day at or above this many sunshine hours is good for drying clothes outside. */
+export const SUNNY_DAY_HOURS = 8;
+/** A day at or below this maximum is mild enough to skip the AC. */
+export const MILD_DAY_C = 28;
 
 const AC_MONTHS = [3, 4, 5, 6];
 
 /** Rule-based, explainable nudges. Every suggestion states why it fired and how its saving was estimated. */
-export function generateNudges({ householdSize, snapshots, now }: NudgeContext): Nudge[] {
+export function generateNudges({ householdSize, snapshots, now, weather }: NudgeContext): Nudge[] {
   const out: Nudge[] = [];
   const hour = istHour(now);
   const month = Number(istDate(now).slice(5, 7));
@@ -66,9 +76,22 @@ export function generateNudges({ householdSize, snapshots, now }: NudgeContext):
     out.push({ id: "high-usage", category: "energy", priority: 70, title: "Above the usual use per person", why: `About ${Math.round(perPerson)} kWh per person this month. Many households stay under 90 (a rule of thumb, not a standard).`, action: "Start with the biggest loads: AC, geyser, fridge and water pump timers.", savingKwhPerMonth: kwh, savingInrPerMonth: inr(kwh) });
   }
 
-  if (AC_MONTHS.includes(month) && latest.electricityKwh >= 150) {
+  // With a live forecast the weather decides; without one we fall back to the hot months of the calendar.
+  const hotToday = weather ? weather.today.maxC >= HOT_DAY_C : AC_MONTHS.includes(month);
+  if (hotToday && latest.electricityKwh >= 150) {
     const kwh = Math.round(latest.electricityKwh * 0.08);
-    out.push({ id: "ac-setpoint", category: "energy", priority: 65, title: "Set the AC to 24–26 °C", why: "It is the hot season and each degree warmer saves roughly 6% of AC energy. We assume AC is about a third of your bill.", action: "Set 24–26 °C with the fan on auto.", savingKwhPerMonth: kwh, savingInrPerMonth: inr(kwh) });
+    const why = weather
+      ? `${weather.city} reaches ${Math.round(weather.today.maxC)} °C today. Each degree warmer on the AC saves roughly 6% of AC energy, and we assume AC is about a third of your bill.`
+      : "It is the hot season and each degree warmer saves roughly 6% of AC energy. We assume AC is about a third of your bill.";
+    out.push({ id: "ac-setpoint", category: "energy", priority: weather ? 75 : 65, title: weather ? "Hot day: set the AC to 24–26 °C" : "Set the AC to 24–26 °C", why, action: "Set 24–26 °C with the fan on auto.", savingKwhPerMonth: kwh, savingInrPerMonth: inr(kwh), href: "/actions" });
+  }
+
+  if (weather && !hotToday && weather.today.maxC <= MILD_DAY_C && latest.electricityKwh >= 100) {
+    out.push({ id: "mild-day", category: "energy", priority: 55, title: "Mild day: give the AC a rest", why: `Today's high in ${weather.city} is ${Math.round(weather.today.maxC)} °C, cool enough for a fan and open windows.`, action: "Use a fan and open windows in the evening instead of running the AC.", href: "/actions" });
+  }
+
+  if (weather && weather.today.sunshineHours >= SUNNY_DAY_HOURS) {
+    out.push({ id: "sun-dry", category: "energy", priority: 52, title: "Sunny day: dry the laundry outside", why: `About ${Math.round(weather.today.sunshineHours)} hours of sunshine are forecast for ${weather.city} today.`, action: "Hang washing out in the sun instead of using the dryer, and tick the air-dry task.", href: "/actions" });
   }
 
   if (latest.carKm >= 200) {

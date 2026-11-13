@@ -7,8 +7,8 @@ const pillars = [
   {
     icon: BarChart3,
     title: "Personalised Footprint",
-    text: "Enter your monthly electricity units and get an instant carbon baseline anchored in CEA emissions factors. Track trends over time with zero guesswork.",
-    tag: "0.71 kg CO₂/kWh CEA Baseline",
+    text: "Enter your monthly electricity units and get an instant carbon baseline using India's national grid emission factor. Track trends over time with the working shown.",
+    tag: "0.71 kg CO₂/kWh national grid average",
     href: "/footprint",
   },
   {
@@ -76,6 +76,11 @@ export default async function Home() {
           <Link className="button button-outline" href="/schedule">
             <Clock size={16} aria-hidden="true" /> Explore Cleanest Hour
           </Link>
+          {user ? null : (
+            <Link className="text-link" href="/login">
+              Sign in
+            </Link>
+          )}
         </div>
 
         <div style={{ background: "var(--sand-100)", border: "1px solid var(--sand-200)", borderRadius: "14px", padding: "16px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
@@ -113,13 +118,13 @@ export default async function Home() {
       <section style={{ marginTop: "48px", background: "var(--forest-900)", color: "#FFFFFF", borderRadius: "20px", padding: "36px 32px", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "24px" }}>
         <div style={{ maxWidth: "620px" }}>
           <div style={{ display: "inline-flex", gap: "8px", alignItems: "center", color: "var(--surya-500)", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            <ShieldCheck size={18} /> Official Data Standards
+            <ShieldCheck size={18} /> Transparent assumptions
           </div>
           <h2 style={{ color: "#FFFFFF", fontSize: "28px", margin: "8px 0 12px" }}>
-            Ground truth calculations, not arbitrary AI guesses.
+            Every number shows its working.
           </h2>
           <p style={{ color: "rgba(255, 255, 255, 0.8)", margin: 0, fontSize: "15.5px" }}>
-            All footprint metrics strictly follow Central Electricity Authority (CEA) v20.0 grid factors. Solar generation estimates use European Commission PVGIS solar irradiance and MNRE PM Surya Ghar subsidy rules.
+            Footprints use the national grid average emission factor from the Central Electricity Authority (FY 2024-25). Solar figures are planning estimates based on typical Gujarat yields and the PM Surya Ghar subsidy slabs. Each assumption is shown beside its result.
           </p>
         </div>
         <div>

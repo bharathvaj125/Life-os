@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Challenge, Completion, Membership, Snapshot, User } from "@/types";
+import type { Challenge, Completion, Membership, Snapshot, User, Vendor } from "@/types";
 import type { Repository } from "./repository";
 
 /**
@@ -28,7 +28,7 @@ async function fetchAll(table: string, eq?: [column: string, value: string]): Pr
   }
 }
 
-const toUser = (r: Row): User => ({ id: r.id as string, displayName: r.display_name as string, pincode: r.pincode as string, householdSize: r.household_size as number, leaderboardOptIn: r.leaderboard_opt_in as boolean, isDemo: r.is_demo as boolean, createdAt: r.created_at as string });
+const toUser = (r: Row): User => ({ id: r.id as string, displayName: r.display_name as string, pincode: r.pincode as string, householdSize: r.household_size as number, leaderboardOptIn: r.leaderboard_opt_in as boolean, isDemo: r.is_demo as boolean, email: (r.email as string | null) ?? undefined, createdAt: r.created_at as string });
 const fromUser = (u: User) => ({ id: u.id, display_name: u.displayName, pincode: u.pincode, household_size: u.householdSize, leaderboard_opt_in: u.leaderboardOptIn, is_demo: u.isDemo, created_at: u.createdAt });
 
 const toSnapshot = (r: Row): Snapshot => ({ id: r.id as string, userId: r.user_id as string, period: r.period as string, electricityKwh: Number(r.electricity_kwh), billAmountInr: r.bill_amount_inr == null ? undefined : Number(r.bill_amount_inr), lpgCylinders: Number(r.lpg_cylinders), carKm: Number(r.car_km), bikeKm: Number(r.bike_km), publicKm: Number(r.public_km), electricityKg: Number(r.electricity_kg), commuteKg: Number(r.commute_kg), lpgKg: Number(r.lpg_kg), totalKg: Number(r.total_kg), factorVersion: r.factor_version as string, createdAt: r.created_at as string });
@@ -38,6 +38,9 @@ const toCompletion = (r: Row): Completion => ({ id: r.id as string, userId: r.us
 const fromCompletion = (c: Completion) => ({ id: c.id, user_id: c.userId, task_id: c.taskId, dedupe_key: c.dedupeKey, completed_on: c.completedOn, points: c.points, impact_kg: c.impactKg, created_at: c.createdAt });
 
 const toChallenge = (r: Row): Challenge => ({ id: r.id as string, title: r.title as string, description: r.description as string, region: r.region as string, regionPrefix: (r.region_prefix as string | null) ?? null, metric: r.metric as Challenge["metric"], target: Number(r.target), startsOn: r.starts_on as string, endsOn: r.ends_on as string });
+
+const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, createdAt: r.created_at as string });
+const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, created_at: v.createdAt });
 
 export function supabaseStore(): Repository {
   return {
@@ -61,6 +64,20 @@ export function supabaseStore(): Repository {
     },
     async listUsers() {
       return (await fetchAll("app_users")).map(toUser);
+    },
+
+    async setCredentials(userId, email, passwordHash) {
+      const { data, error } = await db().from("app_users").update({ email, password_hash: passwordHash }).eq("id", userId).select("id").maybeSingle();
+      if (error) {
+        if (error.code === "23505") return false;
+        throw error;
+      }
+      return Boolean(data);
+    },
+    async getCredentials(email) {
+      const { data, error } = await db().from("app_users").select("id, email, password_hash").eq("email", email).maybeSingle();
+      if (error) throw error;
+      return data && data.password_hash ? { userId: data.id as string, email: data.email as string, passwordHash: data.password_hash as string } : null;
     },
 
     async upsertSnapshot(snapshot) {
@@ -93,6 +110,20 @@ export function supabaseStore(): Repository {
     },
     async listMemberships() {
       return (await fetchAll("challenge_members")).map((r): Membership => ({ challengeId: r.challenge_id as string, userId: r.user_id as string, joinedAt: r.joined_at as string }));
+    },
+
+    async listVendors() {
+      return (await fetchAll("vendors")).map(toVendor);
+    },
+    async addVendor(vendor) {
+      const { error } = await db().from("vendors").insert(fromVendor(vendor));
+      if (error) throw error;
+      return vendor;
+    },
+    async setVendorStatus(id, status) {
+      const { data, error } = await db().from("vendors").update({ status }).eq("id", id).select("*").maybeSingle();
+      if (error) throw error;
+      return data ? toVendor(data) : null;
     },
   };
 }

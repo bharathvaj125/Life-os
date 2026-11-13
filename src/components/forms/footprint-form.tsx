@@ -6,7 +6,8 @@ import { Field, FormError } from "@/components/ui/field";
 import { calculateFootprint } from "@/lib/calculations/footprint";
 import { callApi } from "@/lib/client-api";
 import { useAction } from "@/lib/use-action";
-import { CheckCircle2 } from "lucide-react";
+import type { BillSavingsBonus } from "@/lib/calculations/bill-savings";
+import { CheckCircle2, Sparkles } from "lucide-react";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? 0 : Number(v));
 
@@ -19,6 +20,7 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
     totalKg: number;
   } | null>(null);
   const [saved, setSaved] = useState(false);
+  const [bonus, setBonus] = useState<BillSavingsBonus | null>(null);
 
   function readInputs(form: HTMLFormElement) {
     const f = new FormData(form);
@@ -47,10 +49,12 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
     e.preventDefault();
     const body = Object.fromEntries(new FormData(e.currentTarget));
     setSaved(false);
+    setBonus(null);
     await run(
-      () => callApi("/api/v1/footprint", "POST", body),
-      () => {
+      () => callApi<{ bonus: BillSavingsBonus | null }>("/api/v1/footprint", "POST", body),
+      (data) => {
         setSaved(true);
+        setBonus(data.bonus);
         router.refresh();
       }
     );
@@ -167,6 +171,15 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
         <div role="status" className="form-ok" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <CheckCircle2 size={18} />
           <span>Billing month recorded successfully. Your history and trend charts are updated.</span>
+        </div>
+      ) : null}
+
+      {bonus ? (
+        <div role="status" className="callout" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Sparkles size={20} style={{ color: "var(--forest-600)", flexShrink: 0 }} />
+          <span>
+            <strong>Bill savings bonus: +{bonus.points} points.</strong> Your units fell {bonus.reductionPct}% from last month ({bonus.kwhSaved} kWh, about {bonus.impactKg} kg CO₂e avoided).
+          </span>
         </div>
       ) : null}
 

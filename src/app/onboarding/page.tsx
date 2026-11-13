@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/forms/onboarding-form";
 import { Card } from "@/components/ui/card";
@@ -29,9 +30,9 @@ export default async function OnboardingPage() {
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                 <CheckCircle2 size={18} style={{ color: "var(--forest-600)", marginTop: "2px", flexShrink: 0 }} />
                 <div>
-                  <strong style={{ fontSize: "14px", color: "var(--forest-900)" }}>No Passwords to Remember</strong>
+                  <strong style={{ fontSize: "14px", color: "var(--forest-900)" }}>Start now, sign in later</strong>
                   <p style={{ margin: "2px 0 0", fontSize: "13px" }}>
-                    Your session is cryptographically secured with an encrypted browser session cookie. No sign-up friction.
+                    Begin without an account in under a minute, or add an email and password to come back from any device. Already saved one? <Link className="text-link" href="/login">Sign in</Link>.
                   </p>
                 </div>
               </div>
@@ -39,9 +40,9 @@ export default async function OnboardingPage() {
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                 <CheckCircle2 size={18} style={{ color: "var(--forest-600)", marginTop: "2px", flexShrink: 0 }} />
                 <div>
-                  <strong style={{ fontSize: "14px", color: "var(--forest-900)" }}>CEA Ground Truth</strong>
+                  <strong style={{ fontSize: "14px", color: "var(--forest-900)" }}>Clear emission basis</strong>
                   <p style={{ margin: "2px 0 0", fontSize: "13px" }}>
-                    Emissions use Central Electricity Authority (CEA) v20.0 national benchmarks, not speculative numbers.
+                    Emissions use the national grid average from the Central Electricity Authority (FY 2024-25). It is a national average, not your local feeder.
                   </p>
                 </div>
               </div>

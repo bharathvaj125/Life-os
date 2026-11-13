@@ -91,10 +91,10 @@ export default async function ActionsPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "10px", margin: "40px 0 16px" }}>
         <div>
           <h2 className="section-title" style={{ margin: 0 }}>
-            Verifiable Action Catalog
+            Action Catalog
           </h2>
           <p className="muted" style={{ margin: "4px 0 0" }}>
-            Self-reported actions are protected by strict server-side idempotency: a task can only be rewarded once inside its cadence window.
+            Ticked actions are self-reported, so each can be rewarded only once per day, week or lifetime. Savings that show up on your bills earn a bigger bonus on the Footprint page.
           </p>
         </div>
         <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "var(--muted-text)" }}>

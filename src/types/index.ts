@@ -8,7 +8,16 @@ export interface User {
   householdSize: number;
   leaderboardOptIn: boolean;
   isDemo: boolean;
+  /** Set once the household adds an account, so it can sign in from another device. Never the password. */
+  email?: string;
   createdAt: string;
+}
+
+/** Sign-in details, kept apart from User so a password hash can never travel with a profile. */
+export interface Credentials {
+  userId: string;
+  email: string;
+  passwordHash: string;
 }
 
 /** Monthly inputs a household reports. Everything is optional except electricity. */
@@ -83,10 +92,32 @@ export interface Membership {
   joinedAt: string;
 }
 
+export type VendorService = "rooftop-solar" | "solar-water-heater" | "ev-charging" | "energy-audit" | "efficient-appliances";
+export type VendorStatus = "pending" | "approved" | "rejected";
+
+/** A business listed in the resource hub. Only approved listings are public. */
+export interface Vendor {
+  id: string;
+  name: string;
+  city: string;
+  pincode: string;
+  services: VendorService[];
+  phone?: string;
+  website?: string;
+  /** What the vendor says about its empanelment. Self-declared, so the page tells citizens to verify it. */
+  empanelmentClaim?: string;
+  status: VendorStatus;
+  /** Sample listings are placeholders for demos and are labelled as such everywhere. */
+  isSample: boolean;
+  createdAt: string;
+}
+
 export interface StoreData {
   users: User[];
   snapshots: Snapshot[];
   completions: Completion[];
   challenges: Challenge[];
   memberships: Membership[];
+  vendors: Vendor[];
+  credentials: Credentials[];
 }

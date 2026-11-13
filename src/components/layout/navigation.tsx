@@ -12,6 +12,7 @@ const links = [
   ["/schedule", "Cleanest Hour"],
   ["/community", "Community"],
   ["/resources", "Solar & Hub"],
+  ["/vendors", "Vendors"],
 ];
 
 export function Navigation() {

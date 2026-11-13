@@ -102,17 +102,30 @@ export function OnboardingForm() {
               ⚡ Estimated initial electricity footprint: <strong>{estimatedBaselineKg} kg CO₂e / month</strong>
             </span>
             <span className="chip" style={{ fontSize: "11px", background: "#FFFFFF" }}>
-              CEA v20.0 Factor
+              CEA grid average
             </span>
           </div>
         </div>
       ) : null}
 
+      <div style={{ marginTop: "12px", borderTop: "1px solid var(--sand-200)", paddingTop: "18px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--forest-800)" }}>🔑 Save your progress (optional)</span>
+        </div>
+        <p className="muted" style={{ margin: "0 0 12px", fontSize: "13px" }}>
+          Add an email and password to sign back in from any phone or laptop. Skip it and you can still start now, but you will only be remembered on this browser.
+        </p>
+        <div className="form-grid">
+          <Field label="Email" name="email" type="email" autoComplete="email" maxLength={120} placeholder="you@example.com" />
+          <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} maxLength={128} hint="At least 8 characters." />
+        </div>
+      </div>
+
       <FormError message={error} />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "var(--muted-light)" }}>
-          <Shield size={14} /> No password required · Protected session
+          <Shield size={14} /> Account optional · Protected session
         </div>
         <Button type="submit" disabled={pending} className="button-surya" style={{ minWidth: "220px" }}>
           {pending ? "Calculating Baseline…" : "Generate My Footprint"} <ArrowRight size={16} />

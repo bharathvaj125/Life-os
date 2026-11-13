@@ -19,7 +19,11 @@ async function persist(data: StoreData) {
 function load(): Promise<StoreData> {
   g.__lifeosData ??= (async () => {
     try {
-      return JSON.parse(await fs.readFile(file(), "utf8")) as StoreData;
+      const data = JSON.parse(await fs.readFile(file(), "utf8")) as StoreData;
+      // Files written before vendors existed get the sample listings so the directory is never empty.
+      data.vendors ??= buildSeed(new Date()).vendors;
+      data.credentials ??= [];
+      return data;
     } catch {
       const seeded = buildSeed(new Date());
       await persist(seeded);
@@ -60,6 +64,21 @@ export const fileStore: Repository = {
     return (await load()).users;
   },
 
+  async setCredentials(userId, email, passwordHash) {
+    return mutate((d) => {
+      const user = d.users.find((u) => u.id === userId);
+      if (!user || d.credentials.some((c) => c.email === email && c.userId !== userId)) return false;
+      const existing = d.credentials.find((c) => c.userId === userId);
+      if (existing) Object.assign(existing, { email, passwordHash });
+      else d.credentials.push({ userId, email, passwordHash });
+      user.email = email;
+      return true;
+    });
+  },
+  async getCredentials(email) {
+    return (await load()).credentials.find((c) => c.email === email) ?? null;
+  },
+
   async upsertSnapshot(snapshot) {
     return mutate((d) => {
       const i = d.snapshots.findIndex((s) => s.userId === snapshot.userId && s.period === snapshot.period);
@@ -96,5 +115,20 @@ export const fileStore: Repository = {
   },
   async listMemberships() {
     return (await load()).memberships;
+  },
+
+  async listVendors() {
+    return (await load()).vendors;
+  },
+  async addVendor(vendor) {
+    return mutate((d) => { d.vendors.push(vendor); return vendor; });
+  },
+  async setVendorStatus(id, status) {
+    return mutate((d) => {
+      const vendor = d.vendors.find((v) => v.id === id);
+      if (!vendor) return null;
+      vendor.status = status;
+      return vendor;
+    });
   },
 };

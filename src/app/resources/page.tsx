@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ExternalLink, FileText, Sun } from "lucide-react";
 import { SolarCalculator } from "@/components/solar/solar-calculator";
 import { Card } from "@/components/ui/card";
@@ -31,12 +32,13 @@ export default async function ResourcesPage() {
       >
         <div style={{ marginBottom: "18px" }}>
           <p style={{ margin: 0, color: "var(--muted-text)" }}>
-            Calculates optimal kWp capacity, annual kWh generation, financial payback, and direct government capital subsidy based on official Ministry of New and Renewable Energy (MNRE) guidelines.
+            Calculates optimal kWp capacity, annual kWh generation, financial payback, and the central subsidy using PM Surya Ghar subsidy slabs. These are planning estimates; confirm exact figures on the national portal before you apply.
           </p>
         </div>
         <SolarCalculator
           defaultMonthlyKwh={latest?.electricityKwh}
           defaultTariff={rate}
+          defaultPincode={user?.pincode}
           signedIn={Boolean(user)}
         />
       </Card>
@@ -63,7 +65,8 @@ export default async function ResourcesPage() {
         </Card>
         <Card title="3. Empanelled Installer" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>03</span>}>
           <p style={{ fontSize: "14px" }}>
-            Select an authorized vendor from the portal roster. The installer performs a physical survey covering shade, orientation, and structural integrity.
+            Select an authorized vendor from the portal roster. The installer performs a physical survey covering shade, orientation, and structural integrity.{" "}
+            <Link className="text-link" href="/vendors">Browse the vendor directory</Link>.
           </p>
         </Card>
         <Card title="4. Inspection & DBT Subsidy" icon={<span className="chip surya" style={{ fontSize: "14px", fontWeight: 800 }}>04</span>}>

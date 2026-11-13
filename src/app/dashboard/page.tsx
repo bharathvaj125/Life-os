@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ArrowUpRight, Flame, Sparkles, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { NudgeList } from "@/components/actions/nudge-list";
 import { ImpactChart } from "@/components/charts/impact-chart";
+import { AccountCard } from "@/components/account/account-card";
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import { WeatherCard } from "@/components/weather/weather-card";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
 import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
@@ -17,7 +19,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [{ snapshots, trend }, { nudges, progress }] = await Promise.all([
+  const [{ snapshots, trend }, { nudges, progress, weather }] = await Promise.all([
     getFootprintView(user.id),
     getActionsView(user),
   ]);
@@ -99,6 +101,14 @@ export default async function DashboardPage() {
         />
       </section>
 
+      <div style={{ marginBottom: "24px" }}>
+        <WeatherCard weather={weather} />
+      </div>
+
+      <div style={{ marginBottom: "24px" }}>
+        <AccountCard email={user.email} />
+      </div>
+
       <div className="split">
         <Card title="Monthly Footprint Trend" className="card-accent-green">
           <div style={{ marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -111,7 +121,7 @@ export default async function DashboardPage() {
           </div>
           <ImpactChart data={snapshots.map((s) => ({ label: formatPeriod(s.period), kgCO2e: s.totalKg }))} />
           <p className="muted" style={{ marginTop: "14px", fontSize: "12.5px" }}>
-            Grid factor: <strong>{EMISSION_FACTORS.electricityKgPerKwh} kg CO₂/kWh</strong> ({EMISSION_FACTORS.version}). Traceable CEA reference standards.
+            Grid factor: <strong>{EMISSION_FACTORS.electricityKgPerKwh} kg CO₂/kWh</strong> ({EMISSION_FACTORS.version}), the CEA national grid average.
           </p>
         </Card>
 

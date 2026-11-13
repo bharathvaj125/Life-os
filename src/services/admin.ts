@@ -27,5 +27,7 @@ export async function loadDemoData(): Promise<{ added: number }> {
   for (const s of seed.snapshots.filter((s) => freshIds.has(s.userId))) await repo.upsertSnapshot(s);
   for (const c of seed.completions.filter((c) => freshIds.has(c.userId))) await repo.addCompletion(c);
   for (const m of seed.memberships.filter((m) => freshIds.has(m.userId))) await repo.joinChallenge(m);
+  const knownVendors = new Set((await repo.listVendors()).map((v) => v.id));
+  for (const v of seed.vendors.filter((v) => !knownVendors.has(v.id))) await repo.addVendor(v);
   return { added: fresh.length };
 }

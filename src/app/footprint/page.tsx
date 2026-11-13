@@ -6,6 +6,8 @@ import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
 import { requireUser } from "@/lib/auth/session";
 import { formatPeriod, istPeriod } from "@/lib/dates";
 import { num } from "@/lib/format";
+import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
+import { getProgress } from "@/services/actions";
 import { getFootprintView } from "@/services/footprint";
 import { ArrowDownRight, ArrowUpRight, BarChart3, BookOpen, Leaf, Sparkles } from "lucide-react";
 
@@ -13,7 +15,8 @@ export const metadata: Metadata = { title: "Personalised Footprint Tracker" };
 
 export default async function FootprintPage() {
   const user = await requireUser();
-  const { snapshots, trend } = await getFootprintView(user.id);
+  const [{ snapshots, trend }, { completions }] = await Promise.all([getFootprintView(user.id), getProgress(user.id)]);
+  const bonusByPeriod = new Map(completions.filter((c) => c.taskId === BILL_SAVINGS_TASK_ID).map((c) => [c.dedupeKey.slice(BILL_SAVINGS_TASK_ID.length + 1), c.points]));
   const history = [...snapshots].reverse();
   const { baselineKg, latest } = trend;
   const sinceBaseline =
@@ -26,7 +29,7 @@ export default async function FootprintPage() {
       <p className="eyebrow">Requirement 1 · Personalised Footprint Tracker</p>
       <h1>Your Carbon Baseline & History</h1>
       <p className="intro">
-        Your first month forms your verified baseline. As you adopt energy-saving habits and log each new bill, see your trajectory in real kilograms of CO₂ equivalent.
+        Your first month forms your baseline. As you adopt energy-saving habits and log each new bill, see your trajectory in kilograms of CO₂ equivalent. If your units fall by 5% or more against last month, you earn a bill savings bonus.
       </p>
 
       {sinceBaseline !== null ? (
@@ -95,6 +98,11 @@ export default async function FootprintPage() {
                     <strong style={{ fontFamily: "JetBrains Mono, monospace", color: "var(--forest-900)" }}>
                       {num(s.totalKg)} kg CO₂e
                     </strong>
+                    {bonusByPeriod.get(s.period) ? (
+                      <div>
+                        <span className="chip" style={{ marginTop: "6px" }}>+{bonusByPeriod.get(s.period)} pts bill savings bonus</span>
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -109,7 +117,7 @@ export default async function FootprintPage() {
         </p>
         <ul className="notes">
           <li>
-            <strong>Grid Electricity:</strong> {EMISSION_FACTORS.electricityKgPerKwh} kg CO₂ per kWh based on the Central Electricity Authority (CEA) CO₂ Baseline Database ({EMISSION_FACTORS.version}). (1 t CO₂/MWh = 1 kg CO₂/kWh).
+            <strong>Grid Electricity:</strong> {EMISSION_FACTORS.electricityKgPerKwh} kg CO₂ per kWh the national grid average from the Central Electricity Authority (CEA) CO₂ Baseline Database, FY 2024-25 ({EMISSION_FACTORS.version}). (1 t CO₂/MWh = 1 kg CO₂/kWh).
           </li>
           <li>
             <strong>Vehicle Travel:</strong> Four-wheeler petrol/diesel at {EMISSION_FACTORS.carKgPerKm} kg CO₂/km; two-wheeler motorcycle/scooter at {EMISSION_FACTORS.bikeKgPerKm} kg CO₂/km; public transport (bus/metro) at {EMISSION_FACTORS.publicKgPerKm} kg CO₂/km.

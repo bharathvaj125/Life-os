@@ -13,9 +13,13 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | **Personalised footprint tracker** | One-minute onboarding from last month's units, a baseline, monthly history and trend, travel and LPG add-ons, and a visible calculation | `/onboarding`, `/footprint`, `/dashboard` |
 | **Behavioural nudges and micro-tasks** | Rule-based suggestions from the user's own bills and the time of day (evening-peak alert, usage rise, AC season), plus 10 daily, weekly and one-time tasks | `/actions` |
 | **Gamification and social impact** | Points, streaks, levels, local and Gujarat-wide challenges with shared targets, opt-in leaderboards | `/community` |
-| **Actionable resource hub** | Rooftop solar estimator with ranges and assumptions, step-by-step path to apply, links to official bodies | `/resources` |
-| **State administrators** | Server-protected area view with small-group suppression | `/admin` |
+| **Actionable resource hub** | Rooftop solar estimator with ranges, assumptions and today's local sunshine; step-by-step path to apply; links to official bodies; a vendor directory with admin review and a verify-before-you-pay checklist | `/resources`, `/vendors` |
+| **State administrators** | Server-protected area view with small-group suppression, plus review of vendor listing requests | `/admin` |
 | **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
+| **Extra: live weather** | Today's forecast (Open-Meteo, no key) drives the AC and drying nudges and the solar insight | `/dashboard`, `/actions`, `/resources` |
+| **Extra: accounts** | Optional email and password so a household can sign in from any device, or start anonymously | `/login`, `/onboarding` |
+| **Extra: bill-based savings bonus** | Units that fall 5% or more against last month earn bonus points, measured from the bills | `/footprint` |
+| **Extra: installable** | Web app manifest and service worker, so it installs on a phone like an app | all pages |
 
 ### Screens
 
@@ -47,7 +51,7 @@ Pitch deck: [`docs/LiFE-OS-pitch-deck.pdf`](docs/LiFE-OS-pitch-deck.pdf) · Demo
 ### Two-Person Team Roles
 
 * **Person 1 (Backend, Database, Calculations & Security):**
-  * Core domain calculation modules in src/lib/calculations/ (CEA CO₂ footprint, PVGIS solar feasibility, gamification idempotency, circadian schedule, and k-anonymity).
+  * Core domain calculation modules in src/lib/calculations/ (grid-factor CO₂ footprint, solar feasibility, weather, gamification idempotency, bill-based savings, circadian schedule, and k-anonymity).
   * Next.js Route Handlers (src/app/api/v1/**), Zod validation, and CSRF protection.
   * Dual-mode persistence: in-memory/JSON local demo repository (.data/lifeos.json) and Supabase PostgreSQL with RLS.
   * HMAC-SHA256 signed cookie sessions and security boundaries.
@@ -175,10 +179,12 @@ Row level security is enabled on every table with **no** public policy. The brow
 
 | Output | Formula | Source and caveat |
 | --- | --- | --- |
-| Footprint | `kWh × grid factor + km × vehicle factor + cylinders × LPG factor` | Factors in [`emission-factors.ts`](src/lib/calculations/emission-factors.ts), versioned and stored on every snapshot. Grid factor is indicative of the CEA CO₂ Baseline Database, **not the current official release**. |
+| Footprint | `kWh × grid factor + km × vehicle factor + cylinders × LPG factor` | Factors in [`emission-factors.ts`](src/lib/calculations/emission-factors.ts), versioned and stored on every snapshot. The grid factor (0.71 kg/kWh) matches CEA's published national average for FY 2024-25. Newer CEA releases list a lower FY 2025-26 value (about 0.675), so refresh it before official use. |
 | Rupee savings | `kWh saved × (bill amount ÷ units)` | The household's own rate. Omitted when no bill amount was entered. |
 | Solar size | `min(roof area × usable fraction ÷ 10 m² per kWp, annual use ÷ yield)` | Shade lowers the usable fraction. Yield 1300–1600 kWh/kWp/yr gives a low–high range. |
 | Solar payback | `net cost ÷ yearly saving`, low to high | Subsidy follows PM Surya Ghar as last known and is **flagged unverified** in the UI. |
+| Solar today | `kWp × forecast radiation (kWh/m²) × 0.75` | Radiation from Open-Meteo at city level; 0.75 is a performance ratio. A planning estimate. |
+| Bill savings bonus | `(last month's kWh − this month's kWh) ÷ last month's kWh`, 5% to 50% | 30, 50 or 70 points by size of the drop, once per month. Units are entered by the household, so this is bill-based, not audited. |
 | Cleanest Hour | `kWh × factor × hourly intensity index` | The index is an **illustrative model**, not live grid data. |
 | Area totals | Latest snapshot per household, grouped by 3-digit PIN prefix | Groups under 5 households are suppressed. |
 
@@ -212,13 +218,15 @@ Open <http://localhost:3000>. With no Supabase variables set, data lives in `.da
 
 ### Switch to Supabase
 
-1. Create a Supabase project and run [`supabase/migrations/20261103000000_init.sql`](supabase/migrations/20261103000000_init.sql) in the SQL editor.
+1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/) in order in the SQL editor (`init`, then `vendors`, then `accounts`).
 2. Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) in `.env.local` or the host's environment settings.
 3. Restart. The footer now reads "Supabase storage". Sign in to `/admin` and press **Load demo households** if you want sample community data.
 
-### Deploy to Vercel
+### Deploy to Render
 
-Import the repository, add `SESSION_SECRET`, `ADMIN_ACCESS_CODE`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SERVICE_ROLE_KEY`, then deploy. Without Supabase variables, Vercel's read-only filesystem makes the JSON store temporary, so use Supabase for any shared deployment.
+Create a Web Service from the repository (Node, build `npm ci && npm run build`, start `npm run start`) and set `SESSION_SECRET`, `ADMIN_ACCESS_CODE`, `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Render runs one long-lived process, which suits the app. The free plan sleeps when idle and takes about a minute to wake.
+
+Vercel also works with Supabase, but without Supabase variables its serverless functions each get their own temporary storage, so the JSON store cannot be shared there.
 
 ## Commands
 
@@ -259,20 +267,22 @@ tests/                  unit tests
 - **Emission factors are indicative.** Update `EMISSION_FACTORS` from the current CEA release before any official use.
 - **Solar subsidy and cost figures are assumptions**, labelled unverified in the app. Confirm on the PM Surya Ghar portal.
 - **Cleanest Hour is modelled**, not live grid data, and shows rupee effects only when the user supplies a peak surcharge.
-- **Tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap, not proof of action.
-- **Sessions are anonymous signed cookies**, not accounts. There is no password recovery and no cross-device sign-in.
-- **The Supabase adapter has not been run against a live project** in this repository's development. The schema and adapter follow the documented API, but expect to verify them on first connection.
-- **No bill OCR, satellite roof tracing or AI assistant** is implemented.
+- **Tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap. The bill-based savings bonus is stronger, but the units are still typed in by the household, so it is not audited.
+- **Accounts are email and password only.** Emails are not verified and there is no password reset, because the app does not send email. Households can also stay anonymous, tied to one browser. Sign-in attempts are rate limited in memory, which suits one server process.
+- **Vendor listings are reviewed by an administrator, not audited.** Empanelment claims are self-declared and the page tells citizens to verify them on the official lists. Sample listings are labelled as samples.
+- **Weather is a city-level forecast** for Gujarat PIN codes, not a measurement at the user's roof. The service is free and has no uptime guarantee, so pages work without it.
+- **No bill OCR, satellite roof tracing, map view or AI assistant** is implemented.
 - Demo households are sample data and are included in admin totals, flagged as demo.
 
 ## Roadmap
 
-1. Supabase Auth (email or phone OTP) replacing anonymous sessions, with per-user RLS policies.
+1. Supabase Auth (verified email or phone OTP, password reset) replacing the app's own accounts, with per-user RLS policies.
 2. Bill upload with OCR and a mandatory review step before saving.
 3. Roof outline on a map with PVGIS yield for the chosen location.
 4. DISCOM tariff slabs and time-of-day rules from official GERC orders, with an effective-date audit trail.
 5. Hourly grid intensity from a published series to replace the illustrative Cleanest Hour curve.
-6. Aggregate views as SQL materialised views, Gujarati and Hindi interfaces, installable PWA with reminder notifications.
+6. Aggregate views as SQL materialised views, Gujarati and Hindi interfaces, and push reminder notifications.
+7. A map view of vendors and community areas, and vendor listings imported from the official empanelment lists.
 
 ## Licence and credits
 

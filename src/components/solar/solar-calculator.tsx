@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Stat } from "@/components/ui/field";
 import type { SolarEstimate } from "@/lib/calculations/solar";
+import { solarYieldTodayKwh, type Weather } from "@/lib/calculations/weather";
 import { callApi } from "@/lib/client-api";
 import { inr, inrRange, num, numRange } from "@/lib/format";
 import { ArrowRight, Sun } from "lucide-react";
@@ -11,25 +12,38 @@ import { ArrowRight, Sun } from "lucide-react";
 interface Props {
   defaultMonthlyKwh?: number;
   defaultTariff?: number;
+  defaultPincode?: string;
   signedIn: boolean;
 }
 
-export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, signedIn }: Props) {
+export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, defaultPincode, signedIn }: Props) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<SolarEstimate | null>(null);
+  const [weather, setWeather] = useState<Weather | null>(null);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const result = await callApi<{ estimate: SolarEstimate }>(
-      "/api/v1/solar",
-      "POST",
-      Object.fromEntries(new FormData(e.currentTarget))
-    );
+    const { pincode, ...fields } = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+    const result = await callApi<{ estimate: SolarEstimate }>("/api/v1/solar", "POST", fields);
+    if (!result.ok) {
+      setPending(false);
+      return setError(result.error);
+    }
+    // Local sunshine is a bonus: a failed or empty lookup just leaves the insight out.
+    setWeather(null);
+    if (/^[1-9]\d{5}$/.test(pincode ?? "")) {
+      try {
+        const res = await fetch(`/api/v1/weather?pincode=${pincode}`);
+        const json = (await res.json()) as { data?: { weather: Weather | null } };
+        setWeather(json.data?.weather ?? null);
+      } catch {
+        setWeather(null);
+      }
+    }
     setPending(false);
-    if (!result.ok) return setError(result.error);
     setEstimate(result.data.estimate);
     // Ticks the one-time "check rooftop solar" task for signed-in users
     if (signedIn) void callApi("/api/v1/tasks/solar-estimate/complete", "POST");
@@ -85,6 +99,19 @@ export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, signedIn }: 
           </div>
         </div>
 
+        <div className="form-grid">
+          <Field
+            label="PIN code (optional)"
+            name="pincode"
+            inputMode="numeric"
+            pattern="[1-9][0-9]{5}"
+            maxLength={6}
+            defaultValue={defaultPincode}
+            placeholder="e.g. 380015"
+            hint="Adds today's local sunshine and expected generation for Gujarat cities."
+          />
+        </div>
+
         <FormError message={error} />
 
         <div>
@@ -116,7 +143,7 @@ export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, signedIn }: 
                 <Stat
                   label="Estimated Annual Generation"
                   value={`${numRange(estimate.annualKwh)} kWh`}
-                  note="PVGIS Western India irradiance model"
+                  note="Typical Gujarat yield assumption"
                 />
                 <Stat
                   label="Annual Electricity Bill Savings"
@@ -131,6 +158,15 @@ export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, signedIn }: 
                   tone="good"
                 />
               </div>
+
+              {weather ? (
+                <div className="callout surya" style={{ margin: "16px 0 0" }}>
+                  <strong>Local solar insight, {weather.city}:</strong> with about {weather.today.sunshineHours} hours of sun forecast today, a{" "}
+                  {num(estimate.capacityKwp)} kWp system would generate roughly{" "}
+                  <strong>{solarYieldTodayKwh(estimate.capacityKwp, weather.today.radiationKwhM2)} kWh today</strong> (planning estimate from the day&apos;s forecast radiation,
+                  weather data by Open-Meteo.com).
+                </div>
+              ) : null}
 
               <div style={{ background: "var(--sand-50)", border: "1px solid var(--sand-200)", borderRadius: "14px", padding: "18px 22px", margin: "16px 0 20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>

@@ -1,4 +1,4 @@
-import type { Challenge, Completion, Membership, Snapshot, StoreData, User } from "@/types";
+import type { Challenge, Completion, Membership, Snapshot, StoreData, User, Vendor } from "@/types";
 import { TASKS } from "@/features/gamification/tasks";
 import { calculateFootprint } from "@/lib/calculations/footprint";
 import { dedupeKeyFor, impactKgOf } from "@/lib/calculations/gamification";
@@ -67,5 +67,20 @@ export function buildSeed(now: Date): StoreData {
     }
   });
 
-  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i) };
+  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i), vendors: buildSampleVendors(createdAt), credentials: [] };
+}
+
+/**
+ * Placeholder listings so the directory can be shown on a fresh install. The names are invented and
+ * carry "(sample)"; they have no contact details and are labelled as samples in the UI.
+ */
+export function buildSampleVendors(createdAt: string): Vendor[] {
+  const base = { status: "approved" as const, isSample: true, createdAt };
+  return [
+    { ...base, id: "sample-vendor-1", name: "Sample Rooftop Solar Works (sample)", city: "Ahmedabad", pincode: "380015", services: ["rooftop-solar", "energy-audit"] },
+    { ...base, id: "sample-vendor-2", name: "Sample Surya Installers (sample)", city: "Gandhinagar", pincode: "382010", services: ["rooftop-solar", "solar-water-heater"] },
+    { ...base, id: "sample-vendor-3", name: "Sample Green Home Appliances (sample)", city: "Vadodara", pincode: "390007", services: ["efficient-appliances", "energy-audit"] },
+    { ...base, id: "sample-vendor-4", name: "Sample EV Charge Point Services (sample)", city: "Surat", pincode: "395003", services: ["ev-charging"] },
+    { ...base, id: "sample-vendor-5", name: "Sample Solar Heater Co. (sample)", city: "Rajkot", pincode: "360001", services: ["solar-water-heater", "rooftop-solar"] },
+  ];
 }

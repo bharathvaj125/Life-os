@@ -3,8 +3,10 @@ import { AdminLogin, AdminTools } from "@/components/admin/admin-controls";
 import { Card } from "@/components/ui/card";
 import { adminEnabled, isAdmin } from "@/lib/auth/session";
 import { num } from "@/lib/format";
+import { VendorReview } from "@/components/admin/vendor-review";
 import { getAdminSummary } from "@/services/admin";
-import { Building2, EyeOff, Lock } from "lucide-react";
+import { listPendingVendors } from "@/services/vendors";
+import { Building2, EyeOff, Lock, Store } from "lucide-react";
 
 export const metadata: Metadata = { title: "Administrator — Regional Aggregates" };
 
@@ -40,7 +42,7 @@ export default async function AdminPage() {
     );
   }
 
-  const s = await getAdminSummary();
+  const [s, pendingVendors] = await Promise.all([getAdminSummary(), listPendingVendors()]);
   return (
     <>
       <p className="eyebrow">State Administrator · Regional Conservation Aggregates</p>
@@ -63,6 +65,12 @@ export default async function AdminPage() {
           <span className="stat-note">{s.suppressedGroups} suppressed (k &lt; {s.k} threshold)</span>
         </div>
       </section>
+
+      <div style={{ marginBottom: "24px" }}>
+        <Card title={`Vendor Requests (${pendingVendors.length})`} icon={<Store size={20} className="card-icon" style={{ margin: 0 }} />}>
+          <VendorReview vendors={pendingVendors} />
+        </Card>
+      </div>
 
       <Card title="Postal Ward Aggregation (k-Anonymity Protected)" icon={<Building2 size={20} className="card-icon" style={{ margin: 0 }} />}>
         <div className="table-wrap">

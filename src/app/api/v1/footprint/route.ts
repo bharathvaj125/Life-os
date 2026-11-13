@@ -10,6 +10,7 @@ export async function GET() {
 export async function POST(request: Request) {
   return handle(async () => {
     const user = await requireApiUser();
-    return saveSnapshot(user.id, await parseBody(request, footprintSchema));
+    const { snapshot, bonus } = await saveSnapshot(user.id, await parseBody(request, footprintSchema));
+    return { ...snapshot, bonus };
   }, 201);
 }

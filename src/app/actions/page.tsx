@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CompleteTaskButton } from "@/components/actions/complete-task-button";
 import { NudgeList } from "@/components/actions/nudge-list";
+import { LiveWeatherNudges } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
 import { requireUser } from "@/lib/auth/session";
@@ -18,7 +19,7 @@ const CADENCE = {
 
 export default async function ActionsPage() {
   const user = await requireUser();
-  const { nudges, tasks, progress } = await getActionsView(user);
+  const { nudges, tasks, progress, weather, snapshots } = await getActionsView(user);
 
   const dailyTasks = tasks.filter((t) => t.cadence === "daily");
   const weeklyTasks = tasks.filter((t) => t.cadence === "weekly");
@@ -86,6 +87,7 @@ export default async function ActionsPage() {
           These recommendations adapt to your reported bill size, family members, and current peak grid hours.
         </p>
         <NudgeList nudges={nudges} />
+        <LiveWeatherNudges pincode={user.pincode} householdSize={user.householdSize} snapshots={snapshots.slice(-2)} serverWeather={weather} serverNudgeIds={nudges.map((n) => n.id)} />
       </Card>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "10px", margin: "40px 0 16px" }}>

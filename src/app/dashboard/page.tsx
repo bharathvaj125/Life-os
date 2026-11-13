@@ -5,7 +5,7 @@ import { NudgeList } from "@/components/actions/nudge-list";
 import { ImpactChart } from "@/components/charts/impact-chart";
 import { AccountCard } from "@/components/account/account-card";
 import { SignOutButton } from "@/components/layout/sign-out-button";
-import { WeatherCard } from "@/components/weather/weather-card";
+import { LiveWeather } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
 import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
       </section>
 
       <div style={{ marginBottom: "24px" }}>
-        <WeatherCard weather={weather} />
+        <LiveWeather pincode={user.pincode} householdSize={user.householdSize} snapshots={snapshots.slice(-2)} serverWeather={weather} serverNudgeIds={nudges.map((n) => n.id)} />
       </div>
 
       <div style={{ marginBottom: "24px" }}>

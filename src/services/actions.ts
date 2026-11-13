@@ -39,7 +39,7 @@ export async function getActionsView(user: User, now: Date = new Date()) {
   const today = istDate(now);
   const done = new Set(progress.completions.map((c) => c.dedupeKey));
   const tasks: TaskView[] = TASKS.map((t) => ({ ...t, doneInWindow: done.has(dedupeKeyFor(t, today)) }));
-  return { nudges: generateNudges({ householdSize: user.householdSize, snapshots, now, weather }), tasks, progress, weather };
+  return { nudges: generateNudges({ householdSize: user.householdSize, snapshots, now, weather }), tasks, progress, weather, snapshots };
 }
 
 export async function completeTask(user: User, taskId: string, now: Date = new Date()): Promise<Completion> {

@@ -5,9 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, Stat } from "@/components/ui/field";
 import type { SolarEstimate } from "@/lib/calculations/solar";
 import { solarYieldTodayKwh, type Weather } from "@/lib/calculations/weather";
+import { forecastUrl, parseForecast } from "@/lib/weather/open-meteo";
+import { placeForPincode } from "@/lib/weather/places";
 import { callApi } from "@/lib/client-api";
 import { inr, inrRange, num, numRange } from "@/lib/format";
 import { ArrowRight, Sun } from "lucide-react";
+
+/** Asks our server first, which caches. If it has no forecast, asks the forecast service directly from the browser. */
+async function loadWeather(pincode: string): Promise<Weather | null> {
+  try {
+    const res = await fetch(`/api/v1/weather?pincode=${pincode}`);
+    const json = (await res.json()) as { data?: { weather: Weather | null } };
+    if (json.data?.weather) return json.data.weather;
+  } catch {
+    // fall through to the direct lookup
+  }
+  const place = placeForPincode(pincode);
+  if (!place) return null;
+  try {
+    const res = await fetch(forecastUrl(place));
+    return res.ok ? parseForecast(await res.json(), place.city) : null;
+  } catch {
+    return null;
+  }
+}
 
 interface Props {
   defaultMonthlyKwh?: number;
@@ -34,15 +55,7 @@ export function SolarCalculator({ defaultMonthlyKwh, defaultTariff, defaultPinco
     }
     // Local sunshine is a bonus: a failed or empty lookup just leaves the insight out.
     setWeather(null);
-    if (/^[1-9]\d{5}$/.test(pincode ?? "")) {
-      try {
-        const res = await fetch(`/api/v1/weather?pincode=${pincode}`);
-        const json = (await res.json()) as { data?: { weather: Weather | null } };
-        setWeather(json.data?.weather ?? null);
-      } catch {
-        setWeather(null);
-      }
-    }
+    if (/^[1-9]\d{5}$/.test(pincode ?? "")) setWeather(await loadWeather(pincode));
     setPending(false);
     setEstimate(result.data.estimate);
     // Ticks the one-time "check rooftop solar" task for signed-in users

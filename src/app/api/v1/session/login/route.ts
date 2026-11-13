@@ -1,4 +1,5 @@
-import { startUserSession } from "@/lib/auth/session";
+import { endAdminSession, startUserSession } from "@/lib/auth/session";
+import { homeFor } from "@/lib/auth/viewer";
 import { handle, parseBody } from "@/lib/api";
 import { loginSchema } from "@/lib/validation";
 import { signIn } from "@/services/account";
@@ -9,7 +10,8 @@ export async function POST(request: Request) {
     const body = await parseBody(request, loginSchema);
     const clientKey = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
     const user = await signIn(body, clientKey);
+    await endAdminSession();
     await startUserSession(user.id);
-    return { id: user.id, displayName: user.displayName };
+    return { id: user.id, displayName: user.displayName, role: user.role, home: homeFor(user.role) };
   });
 }

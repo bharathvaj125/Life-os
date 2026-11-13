@@ -6,6 +6,8 @@
 export const MAX_FAILURES = 8;
 /** Failures allowed from one network address. Looser, because a school, office or event Wi-Fi shares one address among many people. */
 export const MAX_IP_FAILURES = 30;
+/** Account registrations allowed from one address in the window. Generous, so a room of people on one Wi-Fi can all sign up. */
+export const MAX_REGISTRATIONS = 30;
 export const WINDOW_MS = 15 * 60 * 1000;
 
 const failures = new Map<string, number[]>();

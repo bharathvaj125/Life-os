@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { Navigation } from "@/components/layout/navigation";
 import { RegisterServiceWorker } from "@/components/layout/register-sw";
-import { storageMode } from "@/lib/store";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,41 +14,22 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "LiFE-OS", statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#0B2519", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#06130D", width: "device-width", initialScale: 1 };
+
+/** Runs before the page paints, so the saved theme (dark by default) never flashes the wrong colours. */
+const themeScript = `try{var t=localStorage.getItem('lifeos-theme');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const isDemo = storageMode() === "local-demo";
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <a href="#main" className="skip-link">
-          Skip to content
-        </a>
         <RegisterServiceWorker />
-        <Navigation />
-        <main id="main" className="container">
-          {children}
-        </main>
-        <footer className="container footer">
-          <div>
-            <strong>LiFE-OS</strong> · Mission LiFE (Lifestyle for Environment) · HackCult 2026 · Problem HC26-GEDA01
-            <div style={{ marginTop: "4px", fontSize: "12px" }}>
-              Grid factor: CEA national average, FY 2024-25 · Solar: planning estimates using PM Surya Ghar subsidy slabs. Estimates, not audited figures.
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-            <span className="badge" style={{ fontSize: "11px", padding: "3px 10px" }}>
-              {isDemo ? "Local demo storage" : "Supabase connected"}
-            </span>
-            <Link href="/admin" className="text-link" style={{ fontSize: "12px" }}>
-              Administrator View →
-            </Link>
-          </div>
-        </footer>
+        {children}
       </body>
     </html>
   );

@@ -40,6 +40,22 @@ export async function requireApiUser(): Promise<User> {
   return user;
 }
 
+/** The visitor's network address as the host reports it. Shared Wi-Fi shares one address, so limits keyed on it must be generous. */
+export const clientAddress = (request: Request) => request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+
+/** For household-only endpoints. Installers and administrators get a clear refusal, not someone else's data. */
+export async function requireApiCitizen(): Promise<User> {
+  const user = await requireApiUser();
+  if (user.role !== "citizen") throw new ApiError(403, "This is only available to households.");
+  return user;
+}
+
+export async function requireApiInstaller(): Promise<User> {
+  const user = await requireApiUser();
+  if (user.role !== "installer") throw new ApiError(403, "This is only available to installers.");
+  return user;
+}
+
 export async function requireApiAdmin() {
   if (!(await isAdmin())) throw new ApiError(403, "Administrator access is required.");
 }

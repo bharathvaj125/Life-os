@@ -11,7 +11,14 @@ import { CheckCircle2, Sparkles } from "lucide-react";
 
 const num = (v: FormDataEntryValue | null) => (v === null || v === "" ? 0 : Number(v));
 
-export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
+export interface FootprintFields {
+  lpg: boolean;
+  car: boolean;
+  bike: boolean;
+}
+
+/** Only asks about what the home has. `show` is all true when the equipment is unknown. */
+export function FootprintForm({ defaultPeriod, show }: { defaultPeriod: string; show: FootprintFields }) {
   const { pending, error, run, router } = useAction();
   const [breakdown, setBreakdown] = useState<{
     electricityKg: number;
@@ -94,16 +101,18 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
           placeholder="e.g. 1450"
           hint="Used to compute rupee/kWh tariff and rooftop solar savings."
         />
-        <Field
-          label="LPG cylinders used (14.2 kg)"
-          name="lpgCylinders"
-          type="number"
-          min={0}
-          max={10}
-          step="0.25"
-          defaultValue={0}
-          hint="42.3 kg CO₂ per standard cylinder."
-        />
+        {show.lpg ? (
+          <Field
+            label="LPG cylinders used (14.2 kg)"
+            name="lpgCylinders"
+            type="number"
+            min={0}
+            max={10}
+            step="0.25"
+            defaultValue={0}
+            hint="42.3 kg CO₂ per standard cylinder."
+          />
+        ) : null}
       </div>
 
       <fieldset>
@@ -111,24 +120,28 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
           <span>Monthly Travel & Mobility (km, optional)</span>
         </legend>
         <div className="form-grid three" style={{ marginTop: "10px" }}>
-          <Field
-            label="Petrol / diesel car"
-            name="carKm"
-            type="number"
-            min={0}
-            step="any"
-            defaultValue={0}
-            hint="0.17 kg CO₂ / km"
-          />
-          <Field
-            label="Motorcycle / scooter"
-            name="bikeKm"
-            type="number"
-            min={0}
-            step="any"
-            defaultValue={0}
-            hint="0.04 kg CO₂ / km"
-          />
+          {show.car ? (
+            <Field
+              label="Petrol / diesel car"
+              name="carKm"
+              type="number"
+              min={0}
+              step="any"
+              defaultValue={0}
+              hint="0.17 kg CO₂ / km"
+            />
+          ) : null}
+          {show.bike ? (
+            <Field
+              label="Motorcycle / scooter"
+              name="bikeKm"
+              type="number"
+              min={0}
+              step="any"
+              defaultValue={0}
+              hint="0.04 kg CO₂ / km"
+            />
+          ) : null}
           <Field
             label="Bus / metro / train"
             name="publicKm"
@@ -152,13 +165,13 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
             </strong>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", fontSize: "12px" }}>
-            <span className="chip" style={{ background: "#FFFFFF" }}>
+            <span className="chip" style={{ background: "var(--card-bg)" }}>
               ⚡ Electricity: {breakdown.electricityKg} kg
             </span>
-            <span className="chip" style={{ background: "#FFFFFF" }}>
+            <span className="chip" style={{ background: "var(--card-bg)" }}>
               🚗 Travel: {breakdown.commuteKg} kg
             </span>
-            <span className="chip" style={{ background: "#FFFFFF" }}>
+            <span className="chip" style={{ background: "var(--card-bg)" }}>
               🔥 LPG: {breakdown.lpgKg} kg
             </span>
           </div>

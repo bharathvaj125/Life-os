@@ -7,7 +7,7 @@ import type { Challenge, Completion, Credentials, Membership, Snapshot, User, Ve
 export interface Repository {
   createUser(user: User): Promise<User>;
   getUser(id: string): Promise<User | null>;
-  updateUser(id: string, patch: Partial<Pick<User, "leaderboardOptIn" | "displayName">>): Promise<User | null>;
+  updateUser(id: string, patch: Partial<Pick<User, "leaderboardOptIn" | "displayName" | "pincode" | "householdSize" | "homeType" | "ownership" | "roofAccess" | "equipment">>): Promise<User | null>;
   listUsers(): Promise<User[]>;
 
   /** Adds or replaces the sign-in details of a user. Returns false when the email already belongs to someone else. Emails are stored lower-case. */
@@ -30,4 +30,6 @@ export interface Repository {
   addVendor(vendor: Vendor): Promise<Vendor>;
   /** Returns the updated vendor, or null when the id does not exist. */
   setVendorStatus(id: string, status: VendorStatus): Promise<Vendor | null>;
+  /** Replaces the editable details of a listing and sets its status in one step. Returns null when the id does not exist. */
+  updateVendor(id: string, patch: Partial<Pick<Vendor, "name" | "city" | "pincode" | "services" | "phone" | "website" | "empanelmentClaim">>, status: VendorStatus): Promise<Vendor | null>;
 }

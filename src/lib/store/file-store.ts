@@ -23,6 +23,7 @@ function load(): Promise<StoreData> {
       // Files written before vendors existed get the sample listings so the directory is never empty.
       data.vendors ??= buildSeed(new Date()).vendors;
       data.credentials ??= [];
+      for (const u of data.users) u.role ??= "citizen";
       return data;
     } catch {
       const seeded = buildSeed(new Date());
@@ -128,6 +129,14 @@ export const fileStore: Repository = {
       const vendor = d.vendors.find((v) => v.id === id);
       if (!vendor) return null;
       vendor.status = status;
+      return vendor;
+    });
+  },
+  async updateVendor(id, patch, status) {
+    return mutate((d) => {
+      const vendor = d.vendors.find((v) => v.id === id);
+      if (!vendor) return null;
+      Object.assign(vendor, patch, { status });
       return vendor;
     });
   },

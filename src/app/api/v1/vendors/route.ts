@@ -1,7 +1,6 @@
-import { handle, parseBody } from "@/lib/api";
+import { handle } from "@/lib/api";
 import { VENDOR_SERVICE_IDS } from "@/features/vendors/catalog";
-import { vendorSchema } from "@/lib/validation";
-import { listApprovedVendors, submitVendor } from "@/services/vendors";
+import { listApprovedVendors } from "@/services/vendors";
 import type { VendorService } from "@/types";
 
 /** Public: approved listings only, optionally filtered by ?service= and ?place= (city or PIN). */
@@ -14,12 +13,4 @@ export async function GET(request: Request) {
       place: params.get("place") ?? undefined,
     });
   });
-}
-
-/** Public submission. The listing stays pending until an administrator approves it. */
-export async function POST(request: Request) {
-  return handle(async () => {
-    const vendor = await submitVendor(await parseBody(request, vendorSchema));
-    return { id: vendor.id, status: vendor.status };
-  }, 201);
 }

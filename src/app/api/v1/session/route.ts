@@ -1,4 +1,4 @@
-import { endUserSession, startUserSession } from "@/lib/auth/session";
+import { endAdminSession, endUserSession, startUserSession } from "@/lib/auth/session";
 import { handle, parseBody } from "@/lib/api";
 import { onboardingSchema } from "@/lib/validation";
 import { onboard } from "@/services/profile";
@@ -15,6 +15,7 @@ export async function POST(request: Request) {
 export async function DELETE() {
   return handle(async () => {
     await endUserSession();
+    await endAdminSession();
     return { signedOut: true };
   });
 }

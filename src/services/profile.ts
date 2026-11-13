@@ -14,6 +14,7 @@ export async function onboard(input: OnboardingBody): Promise<User> {
   if (input.email && (await getRepository().getCredentials(input.email))) throw new ApiError(409, "That email already has an account. Sign in instead.");
   const user: User = {
     id: randomUUID(),
+    role: "citizen",
     displayName: input.displayName,
     pincode: input.pincode,
     householdSize: input.householdSize,

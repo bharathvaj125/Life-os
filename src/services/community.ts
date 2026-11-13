@@ -19,7 +19,9 @@ export interface LeaderRow {
 
 export async function getCommunityView(user: User, now: Date = new Date()) {
   const repo = getRepository();
-  const [challenges, memberships, completions, users] = await Promise.all([repo.listChallenges(), repo.listMemberships(), repo.listCompletions(), repo.listUsers()]);
+  const [challenges, memberships, completions, everyone] = await Promise.all([repo.listChallenges(), repo.listMemberships(), repo.listCompletions(), repo.listUsers()]);
+  // Installers and administrators are not households, so they never appear on leaderboards.
+  const users = everyone.filter((u) => u.role === "citizen");
   const today = istDate(now);
   const prefix = regionOf(user.pincode);
   const joined = new Set(memberships.filter((m) => m.userId === user.id).map((m) => m.challengeId));

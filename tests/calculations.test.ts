@@ -118,7 +118,7 @@ describe("nudges", () => {
 });
 
 describe("admin aggregation", () => {
-  const user = (id: string, pincode: string): User => ({ id, displayName: id, pincode, householdSize: 3, leaderboardOptIn: false, isDemo: false, createdAt: "" });
+  const user = (id: string, pincode: string): User => ({ id, role: "citizen", displayName: id, pincode, householdSize: 3, leaderboardOptIn: false, isDemo: false, createdAt: "" });
   it("hides groups below the threshold and exposes no numbers for them", () => {
     const users = [...Array.from({ length: MIN_GROUP_SIZE }, (_, i) => user(`a${i}`, "380015")), user("b0", "382010"), user("b1", "382010")];
     const snaps = users.map((u) => snap("2026-10", 100, { userId: u.id, id: u.id }));

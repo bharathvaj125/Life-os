@@ -1,4 +1,4 @@
-import { adminEnabled, endAdminSession, startAdminSession, verifyAdminCode } from "@/lib/auth/session";
+import { adminEnabled, endAdminSession, endUserSession, startAdminSession, verifyAdminCode } from "@/lib/auth/session";
 import { ApiError, handle, parseBody } from "@/lib/api";
 import { adminLoginSchema } from "@/lib/validation";
 
@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const { code } = await parseBody(request, adminLoginSchema);
     if (!adminEnabled()) throw new ApiError(503, "Administrator access is not configured on this deployment.");
     if (!verifyAdminCode(code)) throw new ApiError(401, "That access code is not correct.");
+    await endUserSession();
     await startAdminSession();
     return { admin: true };
   });

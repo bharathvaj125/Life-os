@@ -45,19 +45,61 @@ export const solarSchema = z.object({
 
 const blankToUndefined = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
 
-export const vendorSchema = z
-  .object({
-    name: z.string().trim().min(3, "Enter the business name").max(80, "Keep the name under 80 characters"),
-    city: z.string().trim().min(2, "Enter the city").max(40, "Keep the city under 40 characters"),
-    pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Enter a valid 6-digit PIN code"),
-    services: z.array(z.enum(VENDOR_SERVICE_IDS)).min(1, "Pick at least one service").max(5),
-    phone: z.preprocess(blankToUndefined, z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a 10-digit mobile number").optional()),
-    website: z.preprocess(blankToUndefined, z.string().trim().max(200).regex(/^https?:\/\/\S+\.\S+$/, "Enter a full web address starting with https://").optional()),
-    empanelmentClaim: z.preprocess(blankToUndefined, z.string().trim().max(120, "Keep this under 120 characters").optional()),
-  })
-  .refine((v) => v.phone || v.website, { message: "Add a phone number or a website so citizens can reach you", path: ["phone"] });
+const vendorFields = {
+  name: z.string().trim().min(3, "Enter the business name").max(80, "Keep the name under 80 characters"),
+  city: z.string().trim().min(2, "Enter the city").max(40, "Keep the city under 40 characters"),
+  pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Enter a valid 6-digit PIN code"),
+  services: z.array(z.enum(VENDOR_SERVICE_IDS)).min(1, "Pick at least one service").max(5),
+  phone: z.preprocess(blankToUndefined, z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a 10-digit mobile number").optional()),
+  website: z.preprocess(blankToUndefined, z.string().trim().max(200).regex(/^https?:\/\/\S+\.\S+$/, "Enter a full web address starting with https://").optional()),
+  empanelmentClaim: z.preprocess(blankToUndefined, z.string().trim().max(120, "Keep this under 120 characters").optional()),
+};
+const needsContact = { message: "Add a phone number or a website so citizens can reach you", path: ["phone"] };
+
+export const vendorSchema = z.object(vendorFields).refine((v) => v.phone || v.website, needsContact);
 
 export const vendorReviewSchema = z.object({ decision: z.enum(["approved", "rejected"]) });
+
+const flag = z.boolean();
+export const equipmentSchema = z.object({
+  acCount: z.coerce.number().int("Number of ACs must be a whole number").min(0).max(10, "That many ACs looks too high"),
+  geyser: flag,
+  washingMachine: flag,
+  dryer: flag,
+  waterPump: flag,
+  inductionStove: flag,
+  lpg: flag,
+  petrolCar: flag,
+  petrolTwoWheeler: flag,
+  ev: z.enum(["none", "two-wheeler", "car"]),
+  rooftopSolar: flag,
+  inverterBattery: flag,
+});
+
+const homeFields = {
+  pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Enter a valid 6-digit PIN code"),
+  householdSize: z.coerce.number().int("Household size must be a whole number").min(1, "At least 1 person").max(20, "At most 20 people"),
+  homeType: z.enum(["apartment", "independent", "row-house"], { error: "Pick your type of home" }),
+  ownership: z.enum(["owner", "tenant"], { error: "Say whether you own or rent" }),
+  roofAccess: z.enum(["none", "shared", "own"], { error: "Pick your roof access" }),
+  equipment: equipmentSchema,
+};
+
+/** Editing the home later. Same fields as registration, without the account and the bill. */
+export const homeProfileSchema = z.object(homeFields);
+
+export const registerCitizenSchema = z.object({
+  displayName: z.string().trim().min(2, "Enter a name of at least 2 characters").max(40, "Keep the name under 40 characters"),
+  email: emailField,
+  password: passwordField,
+  ...homeFields,
+  electricityKwh: footprintSchema.shape.electricityKwh,
+  billAmountInr: footprintSchema.shape.billAmountInr,
+});
+
+export const registerInstallerSchema = z.object({ email: emailField, password: passwordField, ...vendorFields }).refine((v) => v.phone || v.website, needsContact);
+
+export const demoLoginSchema = z.object({ key: z.enum(["patel", "desai", "installer", "admin"]) });
 
 export const adminLoginSchema =z.object({ code: z.string().min(1, "Enter the access code").max(200) });
 
@@ -66,3 +108,6 @@ export type OnboardingBody = z.infer<typeof onboardingSchema>;
 export type VendorBody = z.infer<typeof vendorSchema>;
 export type AccountBody = z.infer<typeof accountSchema>;
 export type LoginBody = z.infer<typeof loginSchema>;
+export type HomeProfileBody = z.infer<typeof homeProfileSchema>;
+export type RegisterCitizenBody = z.infer<typeof registerCitizenSchema>;
+export type RegisterInstallerBody = z.infer<typeof registerInstallerSchema>;

@@ -1,13 +1,42 @@
 export type Cadence = "daily" | "weekly" | "once";
 export type TaskCategory = "energy" | "mobility" | "cooking" | "community";
 
+/** Who is signed in. Each role sees only its own screens: households, installers, and GEDA administrators. */
+export type Role = "citizen" | "installer" | "admin";
+export type HomeType = "apartment" | "independent" | "row-house";
+export type Ownership = "owner" | "tenant";
+export type RoofAccess = "none" | "shared" | "own";
+export type EvKind = "none" | "two-wheeler" | "car";
+
+/** What the home has, so tips, tasks and tools can be limited to what applies. Unknown (older accounts) means show everything. */
+export interface Equipment {
+  acCount: number;
+  geyser: boolean;
+  washingMachine: boolean;
+  dryer: boolean;
+  waterPump: boolean;
+  inductionStove: boolean;
+  lpg: boolean;
+  petrolCar: boolean;
+  petrolTwoWheeler: boolean;
+  ev: EvKind;
+  rooftopSolar: boolean;
+  inverterBattery: boolean;
+}
+
 export interface User {
   id: string;
+  /** Older accounts have no role stored and are households. */
+  role: Role;
   displayName: string;
   pincode: string;
   householdSize: number;
   leaderboardOptIn: boolean;
   isDemo: boolean;
+  homeType?: HomeType;
+  ownership?: Ownership;
+  roofAccess?: RoofAccess;
+  equipment?: Equipment;
   /** Set once the household adds an account, so it can sign in from another device. Never the password. */
   email?: string;
   createdAt: string;
@@ -109,6 +138,8 @@ export interface Vendor {
   status: VendorStatus;
   /** Sample listings are placeholders for demos and are labelled as such everywhere. */
   isSample: boolean;
+  /** The installer account that manages this listing, if one does. */
+  ownerUserId?: string;
   createdAt: string;
 }
 

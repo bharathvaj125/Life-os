@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Field, Stat } from "@/components/ui/field";
 import {
-  DEFAULT_APPLIANCES,
+  type Appliance,
   INTENSITY_INDEX,
   PEAK_HOURS,
   bestStart,
@@ -17,19 +17,19 @@ import { AlertCircle, Sun } from "lucide-react";
 const hours = Array.from({ length: 24 }, (_, h) => h);
 const solarHours = [10, 11, 12, 13, 14];
 
-export function Scheduler() {
+export function Scheduler({ appliances }: { appliances: Appliance[] }) {
   const [starts, setStarts] = useState<Record<string, number>>(
-    Object.fromEntries(DEFAULT_APPLIANCES.map((a) => [a.id, 19]))
+    Object.fromEntries(appliances.map((a) => [a.id, 19]))
   );
   const [rate, setRate] = useState(6);
   const [surcharge, setSurcharge] = useState(0);
   const opts = { inrPerKwh: rate, peakSurchargePct: surcharge };
 
-  const now = DEFAULT_APPLIANCES.map((a) => ({
+  const now = appliances.map((a) => ({
     a,
     impact: scheduleImpact(a, starts[a.id], opts),
   }));
-  const best = DEFAULT_APPLIANCES.map((a) => scheduleImpact(a, bestStart(a), opts));
+  const best = appliances.map((a) => scheduleImpact(a, bestStart(a), opts));
   const kgNow = now.reduce((s, r) => s + r.impact.kgPerMonth, 0);
   const kgBest = best.reduce((s, r) => s + r.kgPerMonth, 0);
   const surchargeNow = now.reduce(

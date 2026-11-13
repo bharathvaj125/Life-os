@@ -13,11 +13,13 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | **Personalised footprint tracker** | One-minute onboarding from last month's units, a baseline, monthly history and trend, travel and LPG add-ons, and a visible calculation | `/onboarding`, `/footprint`, `/dashboard` |
 | **Behavioural nudges and micro-tasks** | Rule-based suggestions from the user's own bills and the time of day (evening-peak alert, usage rise, AC season), plus 10 daily, weekly and one-time tasks | `/actions` |
 | **Gamification and social impact** | Points, streaks, levels, local and Gujarat-wide challenges with shared targets, opt-in leaderboards | `/community` |
-| **Actionable resource hub** | Rooftop solar estimator with ranges, assumptions and today's local sunshine; step-by-step path to apply; links to official bodies; a vendor directory with admin review and a verify-before-you-pay checklist | `/resources`, `/vendors` |
-| **State administrators** | Server-protected area view with small-group suppression, plus review of vendor listing requests | `/admin` |
+| **Actionable resource hub** | Rooftop solar estimator with ranges, assumptions and today's local sunshine; step-by-step path to apply; links to official bodies; a vendor directory where installers list themselves, an administrator approves each listing, and a verify-before-you-pay checklist points to the official lists | `/resources`, `/vendors`, `/installer` |
+| **State administrators** | Server-protected area view with small-group suppression, plus review of vendor listing requests | `/admin`, `/admin/vendors` |
 | **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
 | **Extra: live weather** | Today's forecast (Open-Meteo, no key) drives the AC and drying nudges and the solar insight | `/dashboard`, `/actions`, `/resources` |
-| **Extra: accounts** | Optional email and password so a household can sign in from any device, or start anonymously | `/login`, `/onboarding` |
+| **Roles** | Three kinds of sign-in, each with its own screens and menu: households, solar installers and GEDA administrators. Nobody sees screens meant for another role | `/`, `/register` |
+| **Personalised to the home** | Registration asks for the home and the equipment it has (ACs, geyser, EV, rooftop solar and more). Tips, daily tasks, the footprint form and Cleanest Hour then cover only what applies | `/register`, `/profile` |
+| **Welcome screen with demo accounts** | Sign in with email and password, or open a demo household, installer or administrator in one click | `/` |
 | **Extra: bill-based savings bonus** | Units that fall 5% or more against last month earn bonus points, measured from the bills | `/footprint` |
 | **Extra: installable** | Web app manifest and service worker, so it installs on a phone like an app | all pages |
 
@@ -218,7 +220,7 @@ Open <http://localhost:3000>. With no Supabase variables set, data lives in `.da
 
 ### Switch to Supabase
 
-1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/) in order in the SQL editor (`init`, then `vendors`, then `accounts`).
+1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/) in order in the SQL editor (`init`, `vendors`, `accounts`, then `roles_equipment`).
 2. Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) in `.env.local` or the host's environment settings.
 3. Restart. The footer now reads "Supabase storage". Sign in to `/admin` and press **Load demo households** if you want sample community data.
 
@@ -242,7 +244,9 @@ Vercel also works with Supabase, but without Supabase variables its serverless f
 
 ```text
 src/
-  app/                  pages and /api/v1 route handlers
+  app/(public)/         welcome and sign-in, registration, how it works
+  app/(app)/            signed-in screens inside the shell (top bar and bottom menu), one set per role
+  app/api/v1/           route handlers
   components/           forms, charts, layout, ui primitives
   features/             task catalogue, official resource list
   lib/
@@ -268,7 +272,7 @@ tests/                  unit tests
 - **Solar subsidy and cost figures are assumptions**, labelled unverified in the app. Confirm on the PM Surya Ghar portal.
 - **Cleanest Hour is modelled**, not live grid data, and shows rupee effects only when the user supplies a peak surcharge.
 - **Tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap. The bill-based savings bonus is stronger, but the units are still typed in by the household, so it is not audited.
-- **Accounts are email and password only.** Emails are not verified and there is no password reset, because the app does not send email. Households can also stay anonymous, tied to one browser. Sign-in attempts are rate limited in memory, which suits one server process.
+- **Accounts are email and password.** Emails are not verified and there is no password reset, because the app does not send email. Sign-in and registration attempts are rate limited in memory, which suits one server process. Demo accounts are shared sandboxes: the demo administrator is view only, and demo households and installers cannot be edited.
 - **Vendor listings are reviewed by an administrator, not audited.** Empanelment claims are self-declared and the page tells citizens to verify them on the official lists. Sample listings are labelled as samples.
 - **Weather is a city-level forecast** for Gujarat PIN codes, not a measurement at the user's roof. The service is free and has no uptime guarantee, so pages work without it.
 - **No bill OCR, satellite roof tracing, map view or AI assistant** is implemented.

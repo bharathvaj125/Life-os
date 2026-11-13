@@ -23,7 +23,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
     return (
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--card-bg)",
           border: "1.5px solid var(--sand-200)",
           borderRadius: "10px",
           padding: "10px 14px",
@@ -83,13 +83,13 @@ export function ImpactChart({ data }: { data: ImpactPoint[] }) {
               <stop offset="95%" stopColor="var(--forest-700)" stopOpacity={0.0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EFE9DE" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sand-200)" />
           <XAxis
             dataKey="label"
             stroke="#8E9B93"
             fontSize={12}
             tickLine={false}
-            axisLine={{ stroke: "#E2DAD0" }}
+            axisLine={{ stroke: "var(--sand-300)" }}
           />
           <YAxis
             stroke="#8E9B93"
@@ -111,7 +111,7 @@ export function ImpactChart({ data }: { data: ImpactPoint[] }) {
             activeDot={{
               r: 6,
               fill: "var(--surya-600)",
-              stroke: "#FFFFFF",
+              stroke: "var(--card-bg)",
               strokeWidth: 2,
             }}
           />

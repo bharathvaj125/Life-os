@@ -1,6 +1,6 @@
-import { handle, requireApiUser } from "@/lib/api";
+import { handle, requireApiCitizen } from "@/lib/api";
 import { getActionsView } from "@/services/actions";
 
 export async function GET() {
-  return handle(async () => (await getActionsView(await requireApiUser())).nudges);
+  return handle(async () => (await getActionsView(await requireApiCitizen())).nudges);
 }

@@ -1,4 +1,4 @@
-import type { Task } from "@/types";
+import type { Equipment, RoofAccess, Task } from "@/types";
 
 /** Task catalogue. Savings are per completion and self-reported, so each one lists its assumption. */
 export const TASKS: Task[] = [
@@ -12,6 +12,36 @@ export const TASKS: Task[] = [
   { id: "pressure-cook", title: "Use a pressure cooker for a meal", description: "Dal, rice or vegetables in a pressure cooker.", category: "cooking", cadence: "daily", points: 10, kwhSaved: 0, kgSaved: 0.15, assumption: "About 0.05 kg less LPG per meal." },
   { id: "join-challenge", title: "Join a community challenge", description: "Pick a goal on the Community page.", category: "community", cadence: "once", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Participation only, no saving claimed." },
   { id: "solar-estimate", title: "Check what rooftop solar could do for you", description: "Run the estimate on the Resources page.", category: "community", cadence: "once", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Learning step, no saving claimed." },
+  { id: "ev-night-charge", title: "Charge your EV outside 6–10 PM", description: "Plug in after 10 PM or before 6 PM this week.", category: "mobility", cadence: "weekly", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Moves load off the evening peak but does not cut units, so no saving is claimed." },
+  { id: "pump-midday", title: "Run the water pump at midday", description: "Fill the tank between 10 AM and 3 PM instead of the evening.", category: "energy", cadence: "daily", points: 10, kwhSaved: 0, kgSaved: 0, assumption: "Eases the evening peak and suits solar hours. No unit saving is claimed." },
+  { id: "solar-selfuse", title: "Use your own solar power", description: "Run the washing machine or other heavy loads between 10 AM and 3 PM.", category: "energy", cadence: "daily", points: 15, kwhSaved: 0, kgSaved: 0, assumption: "Uses your own generation directly. No saving is claimed beyond what your meter shows." },
 ];
 
 export const getTask = (id: string) => TASKS.find((t) => t.id === id);
+
+/** What a task needs a home to have. A task not listed here applies to every home. */
+const NEEDS: Record<string, (e: Equipment, roof: RoofAccess | undefined) => boolean> = {
+  "ac-setpoint": (e) => e.acCount > 0,
+  "peak-shift": (e) => e.washingMachine || e.geyser || e.dryer || e.waterPump || e.ev !== "none",
+  "geyser-short": (e) => e.geyser,
+  "air-dry": (e) => e.dryer,
+  "transit-day": (e) => e.petrolCar || e.petrolTwoWheeler,
+  "pressure-cook": (e) => e.lpg || e.inductionStove,
+  "solar-estimate": (e, roof) => !e.rooftopSolar && roof !== "none",
+  "ev-night-charge": (e) => e.ev !== "none",
+  "pump-midday": (e) => e.waterPump,
+  "solar-selfuse": (e) => e.rooftopSolar,
+};
+
+/**
+ * Whether a task applies to a home. When the equipment is unknown (accounts made before the wizard existed)
+ * every task applies, except the three that only make sense for a specific appliance.
+ */
+export function taskApplies(task: Task, equipment: Equipment | undefined, roof?: RoofAccess): boolean {
+  const needs = NEEDS[task.id];
+  if (!needs) return true;
+  if (!equipment) return !["ev-night-charge", "pump-midday", "solar-selfuse"].includes(task.id);
+  return needs(equipment, roof);
+}
+
+export const tasksFor = (equipment: Equipment | undefined, roof?: RoofAccess): Task[] => TASKS.filter((t) => taskApplies(t, equipment, roof));

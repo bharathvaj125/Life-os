@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Completion, Task, User } from "@/types";
-import { TASKS, getTask } from "@/features/gamification/tasks";
+import { getTask, taskApplies, tasksFor } from "@/features/gamification/tasks";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
 import { generateNudges } from "@/lib/calculations/nudges";
 import { MAX_DAILY_POINTS, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
@@ -38,13 +38,14 @@ export async function getActionsView(user: User, now: Date = new Date()) {
   const [snapshots, progress, weather] = await Promise.all([listSnapshots(user.id), getProgress(user.id, now), getWeatherForPincode(user.pincode)]);
   const today = istDate(now);
   const done = new Set(progress.completions.map((c) => c.dedupeKey));
-  const tasks: TaskView[] = TASKS.map((t) => ({ ...t, doneInWindow: done.has(dedupeKeyFor(t, today)) }));
-  return { nudges: generateNudges({ householdSize: user.householdSize, snapshots, now, weather }), tasks, progress, weather, snapshots };
+  const tasks: TaskView[] = tasksFor(user.equipment, user.roofAccess).map((t) => ({ ...t, doneInWindow: done.has(dedupeKeyFor(t, today)) }));
+  return { nudges: generateNudges({ householdSize: user.householdSize, snapshots, now, weather, equipment: user.equipment, roofAccess: user.roofAccess }), tasks, progress, weather, snapshots };
 }
 
 export async function completeTask(user: User, taskId: string, now: Date = new Date()): Promise<Completion> {
   const task = getTask(taskId);
   if (!task) throw new ApiError(404, "That task does not exist.");
+  if (!taskApplies(task, user.equipment, user.roofAccess)) throw new ApiError(403, "That task does not apply to your home.");
   const repo = getRepository();
   const today = istDate(now);
   const mine = await repo.listCompletions(user.id);

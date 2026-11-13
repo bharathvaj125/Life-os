@@ -44,10 +44,15 @@ export async function getCurrentUser(): Promise<User | null> {
   return id ? getRepository().getUser(id) : null;
 }
 
-/** For pages: returns the signed-in user or sends the visitor to onboarding. */
+/**
+ * For household pages: returns the signed-in household. Visitors with no session go to the welcome screen,
+ * and installers and administrators go to their own home instead of seeing household screens.
+ */
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser();
-  if (!user) redirect("/onboarding");
+  if (!user) redirect("/");
+  if (user.role === "installer") redirect("/installer");
+  if (user.role === "admin") redirect("/admin");
   return user;
 }
 

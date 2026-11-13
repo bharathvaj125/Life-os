@@ -7,7 +7,7 @@ import { callApi } from "@/lib/client-api";
 import { useAction } from "@/lib/use-action";
 import type { Vendor } from "@/types";
 
-export function VendorReview({ vendors }: { vendors: Vendor[] }) {
+export function VendorReview({ vendors, canReview }: { vendors: Vendor[]; canReview: boolean }) {
   const { pending, error, run } = useAction();
   const decide = (id: string, decision: "approved" | "rejected") => run(() => callApi(`/api/v1/admin/vendors/${id}`, "PATCH", { decision }));
 
@@ -25,8 +25,8 @@ export function VendorReview({ vendors }: { vendors: Vendor[] }) {
             {[v.phone, v.website, v.empanelmentClaim ? `Claims: ${v.empanelmentClaim}` : null].filter(Boolean).join(" · ")}
           </p>
           <div className="toolbar">
-            <Button type="button" disabled={pending} onClick={() => decide(v.id, "approved")}>Approve</Button>
-            <Button type="button" disabled={pending} onClick={() => decide(v.id, "rejected")}>Reject</Button>
+            <Button type="button" disabled={pending || !canReview} onClick={() => decide(v.id, "approved")}>Approve</Button>
+            <Button type="button" disabled={pending || !canReview} onClick={() => decide(v.id, "rejected")}>Reject</Button>
           </div>
         </div>
       ))}

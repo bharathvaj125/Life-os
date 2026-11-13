@@ -1,3 +1,4 @@
+import type { Equipment } from "@/types";
 import { EMISSION_FACTORS } from "./emission-factors";
 
 /**
@@ -24,6 +25,20 @@ export const DEFAULT_APPLIANCES: Appliance[] = [
   { id: "ev", name: "EV or scooter charger", kw: 3.3, hours: 3, runsPerWeek: 5 },
   { id: "iron", name: "Iron", kw: 1, hours: 1, runsPerWeek: 3 },
 ];
+
+/** The shiftable appliances a home actually has. Unknown equipment (older accounts) gets the general list. */
+export function appliancesFor(equipment: Equipment | undefined): Appliance[] {
+  if (!equipment) return DEFAULT_APPLIANCES;
+  const list: Appliance[] = [];
+  if (equipment.washingMachine) list.push({ id: "washer", name: "Washing machine", kw: 0.5, hours: 1, runsPerWeek: 4 });
+  if (equipment.dryer) list.push({ id: "dryer", name: "Clothes dryer", kw: 2.5, hours: 1, runsPerWeek: 3 });
+  if (equipment.geyser) list.push({ id: "geyser", name: "Water heater (geyser)", kw: 2, hours: 1, runsPerWeek: 7 });
+  if (equipment.waterPump) list.push({ id: "pump", name: "Water pump", kw: 0.75, hours: 1, runsPerWeek: 7 });
+  if (equipment.ev === "car") list.push({ id: "ev", name: "Electric car charger", kw: 3.3, hours: 4, runsPerWeek: 4 });
+  if (equipment.ev === "two-wheeler") list.push({ id: "ev", name: "E-scooter charger", kw: 0.8, hours: 4, runsPerWeek: 5 });
+  list.push({ id: "iron", name: "Iron", kw: 1, hours: 1, runsPerWeek: 3 });
+  return list;
+}
 
 const hourAt = (start: number, offset: number) => (start + offset) % 24;
 

@@ -7,7 +7,8 @@ import { istDate } from "@/lib/dates";
 /** Region-level numbers only, with groups smaller than the privacy threshold suppressed. */
 export async function getAdminSummary() {
   const repo = getRepository();
-  const [users, snapshots, completions] = await Promise.all([repo.listUsers(), repo.listSnapshots(), repo.listCompletions()]);
+  const [everyone, snapshots, completions] = await Promise.all([repo.listUsers(), repo.listSnapshots(), repo.listCompletions()]);
+  const users = everyone.filter((u) => u.role === "citizen");
   const summary = aggregateByRegion(users, snapshots, completions);
   const latestPeriod = snapshots.reduce((max, s) => (s.period > max ? s.period : max), "");
   return { ...summary, asOf: istDate(), latestPeriod: latestPeriod || null };

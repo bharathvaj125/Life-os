@@ -21,7 +21,6 @@ export function AdminTools() {
   return (
     <div className="toolbar">
       <Button type="button" disabled={pending} onClick={() => run(() => callApi("/api/v1/admin/demo-data", "POST"))}>Load demo households</Button>
-      <Button type="button" disabled={pending} onClick={() => run(() => callApi("/api/v1/admin/session", "DELETE"))}>Sign out of admin</Button>
       <FormError message={error} />
     </div>
   );

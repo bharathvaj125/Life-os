@@ -28,8 +28,8 @@ async function fetchAll(table: string, eq?: [column: string, value: string]): Pr
   }
 }
 
-const toUser = (r: Row): User => ({ id: r.id as string, displayName: r.display_name as string, pincode: r.pincode as string, householdSize: r.household_size as number, leaderboardOptIn: r.leaderboard_opt_in as boolean, isDemo: r.is_demo as boolean, email: (r.email as string | null) ?? undefined, createdAt: r.created_at as string });
-const fromUser = (u: User) => ({ id: u.id, display_name: u.displayName, pincode: u.pincode, household_size: u.householdSize, leaderboard_opt_in: u.leaderboardOptIn, is_demo: u.isDemo, created_at: u.createdAt });
+const toUser = (r: Row): User => ({ id: r.id as string, role: ((r.role as User["role"] | null) ?? "citizen"), homeType: (r.home_type as User["homeType"] | null) ?? undefined, ownership: (r.ownership as User["ownership"] | null) ?? undefined, roofAccess: (r.roof_access as User["roofAccess"] | null) ?? undefined, equipment: (r.equipment as User["equipment"] | null) ?? undefined, displayName: r.display_name as string, pincode: r.pincode as string, householdSize: r.household_size as number, leaderboardOptIn: r.leaderboard_opt_in as boolean, isDemo: r.is_demo as boolean, email: (r.email as string | null) ?? undefined, createdAt: r.created_at as string });
+const fromUser = (u: User) => ({ id: u.id, role: u.role, home_type: u.homeType ?? null, ownership: u.ownership ?? null, roof_access: u.roofAccess ?? null, equipment: u.equipment ?? null, display_name: u.displayName, pincode: u.pincode, household_size: u.householdSize, leaderboard_opt_in: u.leaderboardOptIn, is_demo: u.isDemo, created_at: u.createdAt });
 
 const toSnapshot = (r: Row): Snapshot => ({ id: r.id as string, userId: r.user_id as string, period: r.period as string, electricityKwh: Number(r.electricity_kwh), billAmountInr: r.bill_amount_inr == null ? undefined : Number(r.bill_amount_inr), lpgCylinders: Number(r.lpg_cylinders), carKm: Number(r.car_km), bikeKm: Number(r.bike_km), publicKm: Number(r.public_km), electricityKg: Number(r.electricity_kg), commuteKg: Number(r.commute_kg), lpgKg: Number(r.lpg_kg), totalKg: Number(r.total_kg), factorVersion: r.factor_version as string, createdAt: r.created_at as string });
 const fromSnapshot = (s: Snapshot) => ({ id: s.id, user_id: s.userId, period: s.period, electricity_kwh: s.electricityKwh, bill_amount_inr: s.billAmountInr ?? null, lpg_cylinders: s.lpgCylinders, car_km: s.carKm, bike_km: s.bikeKm, public_km: s.publicKm, electricity_kg: s.electricityKg, commute_kg: s.commuteKg, lpg_kg: s.lpgKg, total_kg: s.totalKg, factor_version: s.factorVersion, created_at: s.createdAt });
@@ -39,8 +39,8 @@ const fromCompletion = (c: Completion) => ({ id: c.id, user_id: c.userId, task_i
 
 const toChallenge = (r: Row): Challenge => ({ id: r.id as string, title: r.title as string, description: r.description as string, region: r.region as string, regionPrefix: (r.region_prefix as string | null) ?? null, metric: r.metric as Challenge["metric"], target: Number(r.target), startsOn: r.starts_on as string, endsOn: r.ends_on as string });
 
-const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, createdAt: r.created_at as string });
-const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, created_at: v.createdAt });
+const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, ownerUserId: (r.owner_user_id as string | null) ?? undefined, createdAt: r.created_at as string });
+const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, owner_user_id: v.ownerUserId ?? null, created_at: v.createdAt });
 
 export function supabaseStore(): Repository {
   return {
@@ -58,6 +58,12 @@ export function supabaseStore(): Repository {
       const row: Row = {};
       if (patch.leaderboardOptIn !== undefined) row.leaderboard_opt_in = patch.leaderboardOptIn;
       if (patch.displayName !== undefined) row.display_name = patch.displayName;
+      if (patch.pincode !== undefined) row.pincode = patch.pincode;
+      if (patch.householdSize !== undefined) row.household_size = patch.householdSize;
+      if (patch.homeType !== undefined) row.home_type = patch.homeType;
+      if (patch.ownership !== undefined) row.ownership = patch.ownership;
+      if (patch.roofAccess !== undefined) row.roof_access = patch.roofAccess;
+      if (patch.equipment !== undefined) row.equipment = patch.equipment;
       const { data, error } = await db().from("app_users").update(row).eq("id", id).select("*").maybeSingle();
       if (error) throw error;
       return data ? toUser(data) : null;
@@ -122,6 +128,19 @@ export function supabaseStore(): Repository {
     },
     async setVendorStatus(id, status) {
       const { data, error } = await db().from("vendors").update({ status }).eq("id", id).select("*").maybeSingle();
+      if (error) throw error;
+      return data ? toVendor(data) : null;
+    },
+    async updateVendor(id, patch, status) {
+      const row: Row = { status };
+      if (patch.name !== undefined) row.name = patch.name;
+      if (patch.city !== undefined) row.city = patch.city;
+      if (patch.pincode !== undefined) row.pincode = patch.pincode;
+      if (patch.services !== undefined) row.services = patch.services;
+      if ("phone" in patch) row.phone = patch.phone ?? null;
+      if ("website" in patch) row.website = patch.website ?? null;
+      if ("empanelmentClaim" in patch) row.empanelment_claim = patch.empanelmentClaim ?? null;
+      const { data, error } = await db().from("vendors").update(row).eq("id", id).select("*").maybeSingle();
       if (error) throw error;
       return data ? toVendor(data) : null;
     },

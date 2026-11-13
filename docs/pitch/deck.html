@@ -65,11 +65,11 @@
   <h1>All four required features, working end to end</h1>
   <div class="cols c2" style="grid-template-rows:1fr 1fr">
     <div class="card"><h2>Personalised footprint tracker</h2><p>One-minute onboarding from last month's units. Baseline, monthly trend, travel and LPG add-ons, and a visible calculation.</p></div>
-    <div class="card"><h2>Nudges and micro-tasks</h2><p>Suggestions from the user's own bills and the time of day, each explaining why. Ten daily, weekly and one-time tasks.</p></div>
-    <div class="card"><h2>Gamification and social impact</h2><p>Points, streaks, levels, local and state-wide challenges with shared targets, and opt-in leaderboards.</p></div>
-    <div class="card"><h2>Actionable resource hub</h2><p>Rooftop solar estimate with ranges and assumptions, the steps to apply, and verified links to official bodies.</p></div>
+    <div class="card"><h2>Nudges and micro-tasks</h2><p>Suggestions from the user's own bills, the time of day and the home's equipment, each explaining why. Tasks have time windows and a weather rule, enforced on the server.</p></div>
+    <div class="card"><h2>Gamification and social impact</h2><p>Points, streaks, levels, shared local and state-wide goals, opt-in leaderboards with trust tiers, and a "Verified citizen" badge for admin-approved photo proof.</p></div>
+    <div class="card"><h2>Actionable resource hub</h2><p>Rooftop solar estimate with ranges and assumptions, the steps to apply, and a map-based vendor directory that an administrator approves.</p></div>
   </div>
-  <p class="muted" style="margin-top:14px">Plus: area-level admin view for GEDA with privacy suppression, and "Cleanest Hour" appliance scheduling.</p>
+  <p class="muted" style="margin-top:14px">Plus: three roles (household, installer, GEDA administrator), an admin area map with privacy suppression, a bill scanner, and "Cleanest Hour" scheduling.</p>
 </section>
 
 <!-- 4 -->
@@ -77,9 +77,20 @@
   <p class="eyebrow">3 · THE PRODUCT</p>
   <h1 style="margin-bottom:14px">Real screens, real data flow</h1>
   <div class="cols c3" style="grid-template-rows:1fr">
-    <div><img class="shot" src="img/dashboard.png" style="height:440px"><p class="muted" style="margin-top:8px">Dashboard: footprint, trend, points, nudges</p></div>
-    <div><img class="shot" src="img/community.png" style="height:440px"><p class="muted" style="margin-top:8px">Community: challenges and leaderboards</p></div>
+    <div><img class="shot" src="img/dashboard.png" style="height:440px"><p class="muted" style="margin-top:8px">Dashboard: the day as a Sun Arc, footprint, points</p></div>
+    <div><img class="shot" src="img/actions.png" style="height:440px"><p class="muted" style="margin-top:8px">Actions: time windows, weather rule, photo proof</p></div>
     <div><img class="shot" src="img/resources.png" style="height:440px"><p class="muted" style="margin-top:8px">Resource hub: solar estimate with assumptions</p></div>
+  </div>
+</section>
+
+<!-- 4b -->
+<section class="slide">
+  <p class="eyebrow">3 · THE PRODUCT, ROLES AND MAPS</p>
+  <h1 style="margin-bottom:14px">Three roles, maps and a fair way to earn trust</h1>
+  <div class="cols c3" style="grid-template-rows:1fr">
+    <div><img class="shot" src="img/welcome.png" style="height:380px"><p class="muted" style="margin-top:8px">Welcome: sign in or open a demo household, installer or administrator</p></div>
+    <div><img class="shot" src="img/vendors.png" style="height:380px"><p class="muted" style="margin-top:8px">Vendor directory on a map, approved by an administrator</p></div>
+    <div><img class="shot" src="img/admin.png" style="height:380px"><p class="muted" style="margin-top:8px">Administrator: area map and table, small groups hidden</p></div>
   </div>
 </section>
 
@@ -115,16 +126,19 @@
 <!-- 6 -->
 <section class="slide">
   <p class="eyebrow">5 · DATABASE SCHEMA</p>
-  <h1 style="margin-bottom:16px">Five tables, constraints that enforce the rules</h1>
+  <h1 style="margin-bottom:16px">Eight tables, constraints that enforce the rules</h1>
   <div class="cols c2" style="align-items:start">
     <div class="card" style="padding:14px 18px">
       <table>
         <tr><th>Table</th><th>Key columns</th></tr>
-        <tr><td><b>app_users</b></td><td>id, pincode, household_size, leaderboard_opt_in, is_demo</td></tr>
+        <tr><td><b>app_users</b></td><td>id, role, email, password hash, pincode, home and equipment, leaderboard_opt_in, is_demo</td></tr>
         <tr><td><b>footprint_snapshots</b></td><td>user_id, period, electricity_kwh, bill_amount_inr, total_kg, factor_version</td></tr>
         <tr><td><b>task_completions</b></td><td>user_id, task_id, dedupe_key, completed_on, points, impact_kg</td></tr>
         <tr><td><b>challenges</b></td><td>region_prefix, metric, target, starts_on, ends_on</td></tr>
         <tr><td><b>challenge_members</b></td><td>challenge_id, user_id</td></tr>
+        <tr><td><b>vendors</b></td><td>name, services, pincode, status (pending, approved, rejected)</td></tr>
+        <tr><td><b>bill_proofs</b></td><td>user_id, period, consumer fingerprint, readings, units</td></tr>
+        <tr><td><b>task_proofs</b></td><td>user_id, task_id, status; the photo is deleted after review</td></tr>
       </table>
     </div>
     <div class="card">
@@ -145,14 +159,14 @@
   <h1 style="margin-bottom:16px">One deployable app, no glue services</h1>
   <div class="cols c2" style="align-items:start">
     <div class="card">
-      <p><span class="tag">Next.js 16</span><span class="tag">React 19</span><span class="tag">TypeScript strict</span><span class="tag">Tailwind 4</span><span class="tag">Recharts</span><span class="tag">zod</span><span class="tag">Supabase PostgreSQL</span><span class="tag">Vitest</span></p>
-      <p class="muted">25 unit tests cover footprint maths, nudges, solar sizing, points rules, streaks, challenge progress, admin suppression, scheduling and IST date handling. Lint, typecheck and production build all pass.</p>
+      <p><span class="tag">Next.js 15</span><span class="tag">React 19</span><span class="tag">TypeScript strict</span><span class="tag">Tailwind 4</span><span class="tag">Recharts</span><span class="tag">zod</span><span class="tag">Supabase PostgreSQL</span><span class="tag">Vitest</span></p>
+      <p class="muted">143 unit tests cover footprint maths, nudges, solar sizing, points rules, task time windows and the weather rule, streaks, challenge progress, admin suppression, bill reading and checks, photo-proof storage and IST date handling. Lint, typecheck and production build all pass. Live on Render with Supabase PostgreSQL.</p>
     </div>
     <div class="card">
       <h2>Key decisions</h2>
       <ul>
         <li>Next.js route handlers instead of a separate API server: one deploy, one language.</li>
-        <li>Server-signed anonymous sessions keep onboarding to a minute. Supabase Auth is the next step.</li>
+        <li>Email and password accounts (salted scrypt hashes) with signed cookie sessions, and three roles enforced on the server. Verified email through Supabase Auth is the next step.</li>
         <li>India Standard Time for every "today", so streaks and limits match users' days.</li>
       </ul>
     </div>
@@ -164,9 +178,9 @@
   <p class="eyebrow">7 · WHY IT STANDS OUT: TRUST BY DESIGN</p>
   <h1 style="margin-bottom:16px">Honest numbers, fair play, private by default</h1>
   <div class="cols c4" style="align-items:start">
-    <div class="card"><h2>Rupees from the user's own bill</h2><p>Savings use their bill ÷ units. We never guess a tariff.</p></div>
+    <div class="card"><h2>Bills that must add up</h2><p>The scanner reads a bill on the device. Readings times the multiplier must equal the billed units, and one bill cannot serve two accounts.</p></div>
     <div class="card"><h2>Explain every nudge</h2><p>Each suggestion states why it fired and how its saving was estimated.</p></div>
-    <div class="card"><h2>Fair points</h2><p>One reward per window, a daily cap, and server-side scoring. The client never sends points.</p></div>
+    <div class="card"><h2>Fair points</h2><p>One reward per window, a daily cap, and server-side scoring. Big actions need an admin-approved photo, deleted after review.</p></div>
     <div class="card"><h2>Privacy</h2><p>Leaderboards are opt-in. Admins see only areas with 5+ households, grouped by 3 PIN digits.</p></div>
   </div>
   <p class="muted" style="margin-top:16px">Every estimate shows its assumptions, and unverified inputs are labelled as such in the interface.</p>
@@ -192,9 +206,9 @@
         <li>Emission factors are indicative, not the current CEA release.</li>
         <li>Solar subsidy figures are unverified assumptions.</li>
         <li>Cleanest Hour is a modelled curve, not live grid data.</li>
-        <li>Tasks are self-reported. Sessions are anonymous.</li>
-        <li>Supabase adapter not yet run against a live project.</li>
-        <li>No bill OCR, roof tracing or AI assistant yet.</li>
+        <li>Everyday tasks are self-reported. Three big ones need a photo that a person approves: a human look, not proof the appliance is real.</li>
+        <li>The bill scanner proves the numbers are consistent, not that the bill is genuine.</li>
+        <li>No satellite roof tracing or AI assistant. Smart-meter confirmation and email verification are planned, not built.</li>
       </ul>
     </div>
   </div>
@@ -205,7 +219,7 @@
   <p class="eyebrow">9 · ROADMAP</p>
   <h1 style="margin-bottom:16px">From prototype to statewide programme</h1>
   <div class="cols c3" style="align-items:start">
-    <div class="card"><h2>Next</h2><ul><li>Supabase Auth (phone OTP) with per-user RLS</li><li>Bill upload with OCR and a mandatory review step</li><li>Roof outline on a map with PVGIS yield</li></ul></div>
+    <div class="card"><h2>Next</h2><ul><li>Verified email or phone OTP and password reset, with per-user RLS</li><li>Confirm scanned bills with the DISCOM or smart-meter data</li><li>Roof outline on the map with PVGIS yield</li></ul></div>
     <div class="card"><h2>Then</h2><ul><li>DISCOM tariff slabs from official GERC orders</li><li>Hourly grid intensity series for Cleanest Hour</li><li>Gujarati and Hindi interfaces</li></ul></div>
     <div class="card green"><h2>The ask</h2><p>Pilot LiFE-OS with a DISCOM and a few wards: verified tariffs, real bill data, and measured savings.</p></div>
   </div>

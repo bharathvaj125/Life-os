@@ -974,7 +974,7 @@ tr.you td {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--card-bg) 95%, transparent);
+  background: var(--card-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--sand-200);

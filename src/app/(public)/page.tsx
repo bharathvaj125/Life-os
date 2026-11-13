@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Leaf } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { AdminLogin } from "@/components/admin/admin-controls";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { DemoAccounts } from "@/components/welcome/demo-accounts";
@@ -22,14 +22,7 @@ export default async function WelcomePage() {
       <section className="auth-left" aria-label="About LiFE-OS">
         <div className="bandhani auth-bandhani" aria-hidden="true" />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-          <Link href="/" className="brand" aria-label="LiFE-OS">
-            <div className="brand-badge" aria-hidden="true">
-              <Leaf size={22} />
-            </div>
-            <span>
-              LiFE<span style={{ color: "#F2B05E" }}>-OS</span>
-            </span>
-          </Link>
+          <BrandLogo href="/" label="LiFE-OS" size={44} />
           <Link href="/about" className="chip surya" style={{ padding: "7px 16px" }}>
             How it works
           </Link>

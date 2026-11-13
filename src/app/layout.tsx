@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
   description:
     "An interactive citizen engagement platform for sustainable energy habits, household carbon footprint tracking, community micro-tasks, and PM Surya Ghar rooftop solar feasibility.",
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  icons: { icon: [{ url: "/icons/logo.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "LiFE-OS", statusBarStyle: "default" },
 };
 

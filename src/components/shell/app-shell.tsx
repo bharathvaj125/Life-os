@@ -1,6 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { Leaf } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { GuidedTour } from "@/components/guide/guided-tour";
 import { Dock } from "@/components/shell/dock";
 import { MotionLayer } from "@/components/motion/motion-layer";
@@ -25,14 +24,7 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
       <header className="shell-top">
         <div className="shell-top-inner">
           <div style={{ display: "flex", alignItems: "center" }}>
-            <Link href={homeFor(viewer.role)} className="brand" aria-label="LiFE-OS home">
-              <div className="brand-badge" aria-hidden="true">
-                <Leaf size={22} />
-              </div>
-              <span>
-                LiFE<span style={{ color: "var(--surya-600)" }}>-OS</span>
-              </span>
-            </Link>
+            <BrandLogo href={homeFor(viewer.role)} label="LiFE-OS home" />
             <span className="role-chip">{ROLE_LABEL[viewer.role]}</span>
           </div>
           <div className="top-actions">

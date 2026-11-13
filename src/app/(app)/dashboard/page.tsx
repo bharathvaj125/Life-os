@@ -6,6 +6,7 @@ import { ImpactChart } from "@/components/charts/impact-chart";
 import { LiveWeather } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { Stat } from "@/components/ui/field";
+import { WhatIfCard } from "@/components/dashboard/what-if-card";
 import { CountUp } from "@/components/ui/count-up";
 import { Ring } from "@/components/ui/ring";
 import { SunArc } from "@/components/ui/sun-arc";
@@ -199,6 +200,8 @@ export default async function DashboardPage() {
       <div style={{ marginBottom: "24px" }}>
         <LiveWeather pincode={user.pincode} householdSize={user.householdSize} snapshots={snapshots.slice(-2)} serverWeather={weather} serverNudgeIds={nudges.map((n) => n.id)} />
       </div>
+
+      <WhatIfCard acCount={user.equipment?.acCount ?? 0} hasGeyser={user.equipment?.geyser ?? false} baseline={latest ? { kwh: latest.electricityKwh, billInr: latest.billAmountInr } : undefined} />
 
       <div className="split">
         <Card title="Monthly Footprint Trend" className="card-accent-green">

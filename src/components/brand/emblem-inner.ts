@@ -1,0 +1,59 @@
+/**
+ * The LiFE-OS emblem, drawn in a 192 x 200 box: a leaf that wraps a home with a solar roof, a wind turbine, a rising
+ * sun and a plug on a green cable. It is one fixed drawing, written here once so the animated logo in the app and
+ * the flat icon file are the same picture. Class names let the page style and animate the parts.
+ */
+export const EMBLEM_VIEWBOX = "0 0 192 200";
+
+export const EMBLEM_INNER = `
+<defs>
+  <linearGradient id="be-leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4F55A"/><stop offset="1" stop-color="#3FA535"/></linearGradient>
+  <linearGradient id="be-leaf2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7BCB3A"/><stop offset="1" stop-color="#2F8F3A"/></linearGradient>
+  <linearGradient id="be-panel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CE8F2"/><stop offset="1" stop-color="#2B8FD1"/></linearGradient>
+  <linearGradient id="be-swoosh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3BB9D6"/><stop offset="1" stop-color="#B6EE63"/></linearGradient>
+  <radialGradient id="be-sunfill" cx="0.4" cy="0.4" r="0.7"><stop offset="0" stop-color="#FFD34D"/><stop offset="1" stop-color="#F59A0C"/></radialGradient>
+  <clipPath id="be-panelclip"><polygon points="46,140 74,112 128,98 100,128"/></clipPath>
+</defs>
+<g class="be-leaf">
+  <path d="M96 16 C62 24 22 58 19 104 C17 142 40 172 80 184 C54 166 40 138 44 104 C48 66 76 34 96 16 Z" fill="url(#be-leaf)"/>
+  <path d="M92 30 C70 50 50 78 50 110 C50 132 60 150 74 160 C64 140 62 112 70 90 C76 70 86 48 92 30 Z" fill="url(#be-leaf2)" opacity="0.92"/>
+</g>
+<path d="M52 148 C76 172 112 170 136 150 C110 160 78 156 52 148 Z" fill="url(#be-swoosh)"/>
+<path d="M78 186 C114 192 152 184 166 160" fill="none" stroke="#7ED348" stroke-width="5" stroke-linecap="round"/>
+<g class="be-plug" transform="translate(170 152) rotate(-24)">
+  <rect x="-4.5" y="-17" width="3" height="11" rx="1.4" fill="#C9F26B"/>
+  <rect x="1.5" y="-17" width="3" height="11" rx="1.4" fill="#C9F26B"/>
+  <rect x="-8" y="-7" width="16" height="17" rx="4.5" fill="#A5E04F"/>
+  <path class="be-bolt" d="M-1 -2 L-4.5 5 L-0.5 4 L-1.5 9.5 L4 2 L0 3 Z" fill="#0B2519"/>
+</g>
+<g class="be-house">
+  <polygon points="46,140 74,112 128,98 100,128" fill="url(#be-panel)"/>
+  <g clip-path="url(#be-panelclip)"><polygon class="be-shine" points="40,150 62,150 96,86 74,86" fill="#fff" opacity="0.35"/></g>
+  <path d="M60 126 L114 113 M101 105 L73 134" stroke="#fff" stroke-width="1.6" opacity="0.85" fill="none"/>
+  <polyline class="be-ink-stroke" points="128,98 100,128 46,140" fill="none" stroke-width="2.2" stroke-linejoin="round"/>
+  <line x1="128" y1="98" x2="166" y2="128" stroke="#B6EE63" stroke-width="4.5" stroke-linecap="round"/>
+  <rect class="be-ink" x="134" y="119" width="14" height="14" rx="2"/>
+  <path class="be-ink-cut" d="M141 119 V133 M134 126 H148" stroke-width="2" fill="none"/>
+</g>
+<g class="be-turbine">
+  <path class="be-ink-stroke" d="M100 74 V99" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+  <g class="be-blades">
+    <path class="be-ink" d="M100 72 C97 60 98 52 100 44 C102 52 103 60 100 72 Z"/>
+    <path class="be-ink" d="M100 72 C97 60 98 52 100 44 C102 52 103 60 100 72 Z" transform="rotate(120 100 72)"/>
+    <path class="be-ink" d="M100 72 C97 60 98 52 100 44 C102 52 103 60 100 72 Z" transform="rotate(240 100 72)"/>
+    <circle class="be-ink" cx="100" cy="72" r="2.8"/>
+  </g>
+</g>
+<g class="be-sun">
+  <g class="be-rays" fill="#FFB21E">
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(-135)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(-95)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(-55)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(-15)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(25)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(65)"/>
+    <path d="M-2.6 -24 L0 -38 L2.6 -24 Z" transform="rotate(105)"/>
+  </g>
+  <circle class="be-disc" r="20" fill="url(#be-sunfill)"/>
+</g>
+`;

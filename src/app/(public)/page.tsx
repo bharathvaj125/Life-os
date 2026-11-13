@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BrandLogo } from "@/components/brand/brand-logo";
+import { BrandLockup, BrandLogo } from "@/components/brand/brand-logo";
 import { AdminLogin } from "@/components/admin/admin-controls";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { DemoAccounts } from "@/components/welcome/demo-accounts";
@@ -29,6 +29,7 @@ export default async function WelcomePage() {
         </div>
 
         <div className="auth-hero">
+          <BrandLockup />
           <p className="eyebrow">Mission LiFE · your sustainability companion</p>
           <h1>
             Habits that keep the <em>grid</em> calm.

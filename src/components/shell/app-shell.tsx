@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Leaf } from "lucide-react";
 import { GuidedTour } from "@/components/guide/guided-tour";
 import { Dock } from "@/components/shell/dock";
+import { MotionLayer } from "@/components/motion/motion-layer";
 import { GridPhase } from "@/components/shell/grid-phase";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -43,6 +44,7 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
         </div>
       </header>
 
+      <MotionLayer />
       <main id="main" className="container app-main">
         {children}
       </main>

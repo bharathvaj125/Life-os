@@ -23,7 +23,17 @@ export function CompleteTaskButton({
 
   if (done || justCompleted) {
     return (
-      <span className="done-badge" style={{ marginTop: "12px", display: "inline-flex" }}>
+      <span className={`done-badge${justCompleted ? " burst" : ""}`} style={{ marginTop: "12px", display: "inline-flex" }}>
+        {justCompleted ? (
+          <>
+            <span className="burst-rays" aria-hidden="true">
+              {Array.from({ length: 10 }, (_, i) => (
+                <i key={i} style={{ ["--a" as string]: `${i * 36}deg` }} />
+              ))}
+            </span>
+            <span className="burst-points" aria-hidden="true">+{points}</span>
+          </>
+        ) : null}
         <Check size={16} aria-hidden="true" />
         <span>Completed in this window</span>
       </span>

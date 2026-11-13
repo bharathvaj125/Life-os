@@ -20,6 +20,7 @@ export default async function WelcomePage() {
   return (
     <div className="auth-split">
       <section className="auth-left" aria-label="About LiFE-OS">
+        <div className="bandhani auth-bandhani" aria-hidden="true" />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
           <Link href="/" className="brand" aria-label="LiFE-OS">
             <div className="brand-badge" aria-hidden="true">

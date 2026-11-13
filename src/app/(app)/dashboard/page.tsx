@@ -5,12 +5,16 @@ import { NudgeList } from "@/components/actions/nudge-list";
 import { ImpactChart } from "@/components/charts/impact-chart";
 import { LiveWeather } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
-import { ProgressBar, Stat } from "@/components/ui/field";
+import { Stat } from "@/components/ui/field";
+import { CountUp } from "@/components/ui/count-up";
+import { Ring } from "@/components/ui/ring";
+import { SunArc } from "@/components/ui/sun-arc";
 import { TermHelp } from "@/components/ui/term-help";
 import { TangibleImpact } from "@/components/ui/tangible-impact";
 import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
 import { requireUser } from "@/lib/auth/session";
 import { describeEquipment } from "@/features/equipment/catalog";
+import { istClock } from "@/lib/calculations/day";
 import { formatPeriod, istHour } from "@/lib/dates";
 import { num } from "@/lib/format";
 import { getActionsView } from "@/services/actions";
@@ -27,7 +31,9 @@ export default async function DashboardPage() {
   const { latest, changePct } = trend;
   const perPerson = latest ? Math.round(latest.totalKg / user.householdSize) : null;
 
-  const hour = istHour(new Date());
+  const now = new Date();
+  const hour = istHour(now);
+  const clock = istClock(now);
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = user.displayName.split(" ")[0];
   const dailyTasks = tasks.filter((t) => t.cadence === "daily");
@@ -56,6 +62,10 @@ export default async function DashboardPage() {
           </div>
         ) : null}
       </div>
+
+      <section className="sunarc-card" aria-label="Your day">
+        <SunArc hour={clock} maxC={weather ? weather.today.maxC : null} />
+      </section>
 
       <section className="path-card" aria-label="Your path today">
         <div className="path-head">
@@ -147,7 +157,7 @@ export default async function DashboardPage() {
           value={
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
               <Zap size={22} style={{ color: "var(--surya-600)" }} />
-              {progress.points} pts
+              <CountUp value={progress.points} /> pts
             </span>
           }
           note={`${progress.level.name}${progress.level.nextAt ? ` · ${progress.level.toNext} pts to next rank` : " · Max Rank Achieved"}`}
@@ -174,7 +184,7 @@ export default async function DashboardPage() {
               <TermHelp termKey="kwh" />
             </span>
           }
-          value={`${num(progress.kgAvoided)} kg`}
+          value={<><CountUp value={progress.kgAvoided} decimals={1} /> kg</>}
           note="From your verified completed actions"
           tone="good"
         />
@@ -207,19 +217,17 @@ export default async function DashboardPage() {
         </Card>
 
         <Card title="Today's Action Quota" className="card-accent-surya">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "15px", fontWeight: 650, color: "var(--forest-900)" }}>
-              {progress.pointsToday} of {progress.dailyLimit} points claimed today
-            </span>
-            <span className="chip surya">
-              {Math.round((progress.pointsToday / progress.dailyLimit) * 100)}% filled
-            </span>
+          <div className="quota-row">
+            <Ring pct={(progress.pointsToday / progress.dailyLimit) * 100} label="Daily points used">
+              <b>{progress.pointsToday}</b>
+              <span>of {progress.dailyLimit}</span>
+            </Ring>
+            <div>
+              <p style={{ fontSize: "15px", fontWeight: 650, color: "var(--forest-900)" }}>{progress.pointsToday} of {progress.dailyLimit} points claimed today</p>
+              <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>{progress.dailyLimit - progress.pointsToday > 0 ? `${progress.dailyLimit - progress.pointsToday} left for today` : "Daily limit reached"}</p>
+            </div>
           </div>
-          <ProgressBar
-            pct={Math.round((progress.pointsToday / progress.dailyLimit) * 100)}
-            label="Daily points used"
-          />
-          <p className="muted" style={{ fontSize: "13.5px" }}>
+          <p className="muted" style={{ fontSize: "13.5px", marginTop: "16px" }}>
             Points prevent spam: each micro-action is limited by its cadence (daily, weekly, or one-time) and capped to {progress.dailyLimit} points per day to keep leaderboards fair.
           </p>
           <div style={{ marginTop: "20px" }}>

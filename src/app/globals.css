@@ -1803,3 +1803,101 @@ tr.you td {
   color: var(--surya-700);
   font-weight: 700;
 }
+
+/* ===== Signature pieces: Sun Arc, rings, Bandhani texture, claim burst ===== */
+:root {
+  --madder: #C4573A;
+}
+:root[data-theme="dark"] {
+  --madder: #FF9D84;
+}
+
+/* A Bandhani tie-dye dot pattern, used as a quiet texture behind a few hero areas. */
+.bandhani {
+  background-image:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--surya-600) 34%, transparent) 1.6px, transparent 2.2px),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--surya-600) 16%, transparent) 1px, transparent 1.6px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+
+.sunarc-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--sand-200);
+  background: linear-gradient(180deg, var(--hero-top), var(--card-bg));
+  margin-bottom: 28px;
+  padding: 8px 28px 24px;
+}
+.sunarc-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--surya-600) 40%, transparent) 1.6px, transparent 2.2px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 60% 70% at 85% 0%, #000, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 85% 0%, #000, transparent 70%);
+}
+
+.sunarc {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 28px;
+}
+.sunarc svg { width: 100%; height: auto; display: block; }
+.sunarc-track { fill: none; stroke: var(--sand-200); stroke-width: 14; stroke-linecap: round; }
+.sunarc-solar { fill: none; stroke: var(--surya-500); stroke-width: 14; stroke-linecap: round; }
+.sunarc-peak { fill: none; stroke: var(--madder); stroke-width: 14; stroke-linecap: round; }
+.sunarc-ground { stroke: var(--sand-300); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.sunarc-roof-top { fill: var(--forest-100); stroke: var(--forest-600); stroke-width: 2.5; stroke-linejoin: round; }
+.sunarc-panels path { fill: var(--surya-500); opacity: 0.9; }
+.sunarc-tick { font-size: 12px; font-weight: 650; fill: var(--muted-text); font-family: inherit; }
+.sunarc-label { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-family: inherit; }
+.sunarc-label-solar { fill: var(--surya-700); }
+.sunarc-label-peak { fill: var(--madder); }
+.sunarc-sun { fill: #FFC266; stroke: var(--surya-600); stroke-width: 3; }
+.sunarc-moon { fill: var(--muted-light); }
+.sunarc-copy h2 { font-size: clamp(24px, 3vw, 34px); margin: 4px 0 8px; }
+.sunarc-copy p { margin: 0 0 12px; }
+.sunarc-peak .sunarc-copy h2 { color: var(--madder); }
+.sunarc-solar .sunarc-copy h2 { color: var(--surya-700); }
+
+@keyframes sun-pulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+.sunarc-sun { animation: sun-pulse 3.2s ease-in-out infinite; }
+
+.ring { position: relative; flex: none; }
+.ring-track { fill: none; stroke: var(--sand-200); }
+.ring-fill { fill: none; stroke: var(--surya-600); stroke-linecap: round; animation: ring-draw 900ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes ring-draw { from { stroke-dashoffset: var(--ring-c); } }
+.ring-centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
+.ring-centre b { font-family: 'JetBrains Mono', monospace; font-size: 26px; color: var(--forest-900); letter-spacing: -0.03em; }
+.ring-centre span { font-size: 11.5px; color: var(--muted-text); }
+
+.quota-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.quota-row p { margin: 0; }
+
+/* A burst of rays and a floating number when a task is claimed. */
+.burst { position: relative; }
+.burst-rays { position: absolute; left: 14px; top: 50%; width: 0; height: 0; pointer-events: none; }
+.burst-rays i { position: absolute; left: -1.5px; top: -22px; width: 3px; height: 10px; border-radius: 2px; background: var(--surya-500); transform-origin: 1.5px 22px; opacity: 0; animation: ray 700ms ease-out forwards; }
+@keyframes ray { 0% { opacity: 0; transform: rotate(var(--a)) scaleY(0.2); } 30% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-10px) scaleY(1); } }
+.burst-points { position: absolute; right: -6px; top: -14px; font-weight: 800; font-size: 15px; color: var(--surya-700); animation: float-up 1100ms ease-out forwards; pointer-events: none; }
+@keyframes float-up { 0% { opacity: 0; transform: translateY(8px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
+
+.auth-left { position: relative; }
+.auth-bandhani { position: absolute; inset: 0; opacity: 0.35; pointer-events: none; mask-image: radial-gradient(ellipse 70% 55% at 100% 0%, #000, transparent 70%); -webkit-mask-image: radial-gradient(ellipse 70% 55% at 100% 0%, #000, transparent 70%); }
+.auth-left > *:not(.auth-bandhani) { position: relative; }
+
+@media (max-width: 760px) {
+  .sunarc { grid-template-columns: 1fr; }
+  .sunarc-card { padding: 4px 16px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sunarc-sun, .ring-fill, .burst-rays i, .burst-points { animation: none; }
+  .burst-points { opacity: 1; }
+}

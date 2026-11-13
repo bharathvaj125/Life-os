@@ -38,8 +38,11 @@ export async function getWeatherForPincode(pincode: string): Promise<Weather | n
   url.searchParams.set("forecast_days", "1");
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS), next: { revalidate: CACHE_SECONDS } });
-    if (!res.ok) return null;
+    const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS), headers: { "user-agent": "LiFE-OS/1.0 (household sustainability app)" }, next: { revalidate: CACHE_SECONDS } });
+    if (!res.ok) {
+      console.warn(`weather: forecast service answered ${res.status} for ${place.city}`);
+      return null;
+    }
     const data = forecastSchema.parse(await res.json());
     return {
       city: place.city,
@@ -54,7 +57,8 @@ export async function getWeatherForPincode(pincode: string): Promise<Weather | n
         radiationKwhM2: mjToKwh(data.daily.shortwave_radiation_sum[0]),
       },
     };
-  } catch {
+  } catch (e) {
+    console.warn(`weather: could not load the forecast for ${place.city}: ${e instanceof Error ? e.message : String(e)}`);
     return null;
   }
 }

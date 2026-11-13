@@ -6,6 +6,8 @@ import { ImpactChart } from "@/components/charts/impact-chart";
 import { LiveWeather } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
+import { TermHelp } from "@/components/ui/term-help";
+import { TangibleImpact } from "@/components/ui/tangible-impact";
 import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
 import { requireUser } from "@/lib/auth/session";
 import { describeEquipment } from "@/features/equipment/catalog";
@@ -105,7 +107,12 @@ export default async function DashboardPage() {
 
       <section className="stats" aria-label="Key household metrics">
         <Stat
-          label={latest ? `Footprint · ${formatPeriod(latest.period)}` : "Footprint"}
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              {latest ? `Footprint · ${formatPeriod(latest.period)}` : "Footprint"}
+              <TermHelp termKey="co2" />
+            </span>
+          }
           value={latest ? `${num(latest.totalKg)} kg` : "—"}
           note={perPerson ? `${perPerson} kg per family member` : "Pending first entry"}
         />
@@ -131,7 +138,12 @@ export default async function DashboardPage() {
           }
         />
         <Stat
-          label="LiFE Level & Points"
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              LiFE Level & Points
+              <TermHelp termKey="points" />
+            </span>
+          }
           value={
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
               <Zap size={22} style={{ color: "var(--surya-600)" }} />
@@ -141,7 +153,12 @@ export default async function DashboardPage() {
           note={`${progress.level.name}${progress.level.nextAt ? ` · ${progress.level.toNext} pts to next rank` : " · Max Rank Achieved"}`}
         />
         <Stat
-          label="Action Streak"
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              Action Streak
+              <TermHelp termKey="streak" />
+            </span>
+          }
           value={
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
               <Flame size={22} style={{ color: "var(--surya-600)" }} />
@@ -151,12 +168,23 @@ export default async function DashboardPage() {
           note={`Personal best: ${progress.streak.longest} consecutive days`}
         />
         <Stat
-          label="Avoided Emissions"
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              Avoided Emissions
+              <TermHelp termKey="kwh" />
+            </span>
+          }
           value={`${num(progress.kgAvoided)} kg`}
           note="From your verified completed actions"
           tone="good"
         />
       </section>
+
+      {progress.kgAvoided > 0 ? (
+        <div style={{ marginBottom: "24px" }}>
+          <TangibleImpact kgAvoided={progress.kgAvoided} />
+        </div>
+      ) : null}
 
       <div style={{ marginBottom: "24px" }}>
         <LiveWeather pincode={user.pincode} householdSize={user.householdSize} snapshots={snapshots.slice(-2)} serverWeather={weather} serverNudgeIds={nudges.map((n) => n.id)} />

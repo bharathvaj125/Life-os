@@ -1,5 +1,6 @@
 export type Cadence = "daily" | "weekly" | "once";
 export type TaskCategory = "energy" | "mobility" | "cooking" | "community";
+export type VerificationTier = "self_reported" | "bill_verified" | "smart_meter";
 
 /** Who is signed in. Each role sees only its own screens: households, installers, and GEDA administrators. */
 export type Role = "citizen" | "installer" | "admin";
@@ -37,6 +38,11 @@ export interface User {
   ownership?: Ownership;
   roofAccess?: RoofAccess;
   equipment?: Equipment;
+  /**
+   * Only set on the sample households, so the leaderboard can show what each trust tier looks like. Real
+   * households get their tier from evidence (a scanned bill), never from this field.
+   */
+  verificationTier?: VerificationTier;
   /** Set once the household adds an account, so it can sign in from another device. Never the password. */
   email?: string;
   createdAt: string;

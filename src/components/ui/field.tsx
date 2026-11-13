@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label: ReactNode;
   hint?: string;
 }
 
@@ -20,7 +20,7 @@ export function FormError({ message }: { message: string | null }) {
   return message ? <p role="alert" className="form-error">{message}</p> : null;
 }
 
-export function Stat({ label, value, note, tone }: { label: string; value: ReactNode; note?: ReactNode; tone?: "good" | "warn" }) {
+export function Stat({ label, value, note, tone }: { label: ReactNode; value: ReactNode; note?: ReactNode; tone?: "good" | "warn" }) {
   return (
     <div className={`stat${tone ? ` stat-${tone}` : ""}`}>
       <span className="stat-label">{label}</span>

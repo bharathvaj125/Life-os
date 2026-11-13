@@ -17,6 +17,8 @@
   --surya-600: #D97724;
   --surya-500: #ED8E38;
   --surya-100: #FFF3E4;
+  --surya-200: #FCDDB8;
+  --surya-800: #8A4510;
   --surya-50: #FFF9F0;
   
   --terra-700: #993820;
@@ -65,6 +67,8 @@
   --surya-600: #EE9B3F;
   --surya-500: #F5AE5C;
   --surya-100: rgba(238, 155, 63, 0.22);
+  --surya-200: rgba(238, 155, 63, 0.38);
+  --surya-800: #F8C27F;
   --surya-50: rgba(238, 155, 63, 0.10);
 
   --terra-700: #FF9D84;
@@ -1119,7 +1123,8 @@ tr.you td {
   left: 50%;
   bottom: 18px;
   transform: translateX(-50%);
-  z-index: 60;
+  /* Below the top bar's layer, so dialogs opened from the bar (the guided tour) cover the menu too. */
+  z-index: 30;
   display: flex;
   gap: 4px;
   max-width: calc(100vw - 24px);
@@ -1749,7 +1754,8 @@ tr.you td {
     display: block;
   }
   .role-chip,
-  .shell-top .header-status {
+  .shell-top .header-status,
+  .shell-top .tour-trigger {
     display: none;
   }
   .brand {

@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth/session";
 import { formatPeriod, istPeriod } from "@/lib/dates";
 import { num } from "@/lib/format";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
+import { plausibilityOf } from "@/lib/calculations/plausibility";
 import { getProgress } from "@/services/actions";
 import { BillScanner } from "@/components/bills/bill-scanner";
 import { scannedPeriods } from "@/services/bills";
@@ -113,6 +114,11 @@ export default async function FootprintPage() {
                     ) : (
                       <div>
                         <span className="chip warn" style={{ marginTop: "6px", opacity: 0.85 }}>Self-reported</span>
+                      </div>
+                    )}
+                    {plausibilityOf(s.electricityKwh, user.householdSize).plausible ? null : (
+                      <div>
+                        <span className="chip warn" style={{ marginTop: "6px" }} title={`Below ${plausibilityOf(s.electricityKwh, user.householdSize).minKwh} kWh for ${user.householdSize} people`}>Unusually low for {user.householdSize} {user.householdSize === 1 ? "person" : "people"}</span>
                       </div>
                     )}
                     {bonusByPeriod.get(s.period) ? (

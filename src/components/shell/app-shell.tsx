@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Leaf } from "lucide-react";
+import { GuidedTour } from "@/components/guide/guided-tour";
 import { Dock } from "@/components/shell/dock";
 import { GridPhase } from "@/components/shell/grid-phase";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
@@ -34,6 +35,7 @@ export function AppShell({ viewer, children }: { viewer: Viewer; children: React
             <span className="role-chip">{ROLE_LABEL[viewer.role]}</span>
           </div>
           <div className="top-actions">
+            {viewer.role === "citizen" ? <GuidedTour /> : null}
             {viewer.role === "citizen" ? <GridPhase /> : null}
             <ThemeToggle />
             <UserMenu name={name} roleLabel={ROLE_LABEL[viewer.role]} profileHref={viewer.role === "citizen" ? "/profile" : undefined} />

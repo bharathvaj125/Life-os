@@ -3,10 +3,36 @@ import type { Completion, Snapshot, User } from "@/types";
 /** Smallest group an administrator may see numbers for. Smaller groups are suppressed. */
 export const MIN_GROUP_SIZE = 5;
 
-// First three PIN digits to area name. Unknown prefixes fall back to the raw prefix.
-const REGION_NAMES: Record<string, string> = {
-  "360": "Rajkot", "361": "Jamnagar", "364": "Bhavnagar", "380": "Ahmedabad", "382": "Gandhinagar", "390": "Vadodara", "395": "Surat",
+// First three PIN digits to Gujarat district/area name. Unknown prefixes fall back to the raw prefix.
+export const REGION_NAMES: Record<string, string> = {
+  "360": "Rajkot",
+  "361": "Jamnagar",
+  "362": "Junagadh",
+  "363": "Surendranagar",
+  "364": "Bhavnagar",
+  "365": "Amreli",
+  "370": "Kutch (Bhuj)",
+  "380": "Ahmedabad",
+  "382": "Gandhinagar",
+  "383": "Sabarkantha",
+  "384": "Mehsana",
+  "385": "Banaskantha",
+  "387": "Kheda",
+  "388": "Anand",
+  "389": "Panchmahal",
+  "390": "Vadodara",
+  "391": "Vadodara Rural",
+  "392": "Bharuch",
+  "393": "Narmada",
+  "394": "Surat Rural / Tapi",
+  "395": "Surat",
+  "396": "Valsad / Navsari",
 };
+
+export const GUJARAT_DISTRICT_LIST = Object.entries(REGION_NAMES).map(([prefix, name]) => ({
+  prefix,
+  name,
+}));
 
 export const regionOf = (pincode: string) => pincode.slice(0, 3);
 export const regionLabel = (prefix: string) => REGION_NAMES[prefix] ?? `PIN ${prefix}xxx`;

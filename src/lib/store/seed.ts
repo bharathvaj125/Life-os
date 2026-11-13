@@ -42,7 +42,9 @@ export function buildSeed(now: Date): StoreData {
     for (let i = 0; i < 6; i++) {
       const id = `demo-${prefix}-${i + 1}`;
       const size = 2 + Math.floor(rand() * 4);
-      users.push({ id, role: "citizen", displayName: `${NAMES[ri * 6 + i]} (demo)`, pincode, householdSize: size, leaderboardOptIn: true, isDemo: true, createdAt });
+      // Sample households show what the trust tiers look like. No sample is marked smart-meter: that tier is not built yet.
+      const tier: User["verificationTier"] = i < 3 ? "bill_verified" : "self_reported";
+      users.push({ id, role: "citizen", displayName: `${NAMES[ri * 6 + i]} (demo)`, pincode, householdSize: size, leaderboardOptIn: true, isDemo: true, verificationTier: tier, createdAt });
 
       const base = 90 + size * 45 + rand() * 80;
       for (let m = 2; m >= 0; m--) {

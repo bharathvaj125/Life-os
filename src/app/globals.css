@@ -2059,3 +2059,8 @@ button.hour-tile:hover, button.hour-tile:focus-visible, button.hour-tile.is-acti
   .be-bolt { animation: bolt-flash 3.2s ease-in-out infinite; }
   @keyframes bolt-flash { 0%, 80%, 100% { opacity: 1; } 86% { opacity: 0.2; } 92% { opacity: 1; } 96% { opacity: 0.3; } }
 }
+
+.share-card { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 26px; align-items: center; }
+.share-card canvas { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--sand-200); box-shadow: 0 14px 40px -14px rgba(0, 0, 0, 0.55); transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.share-card canvas:hover { transform: rotate(-1.2deg) scale(1.02); }
+@media (max-width: 640px) { .share-card { grid-template-columns: 1fr; } .share-card canvas { max-width: 300px; margin: 0 auto; } }

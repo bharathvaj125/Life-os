@@ -6,6 +6,7 @@ import { ImpactChart } from "@/components/charts/impact-chart";
 import { LiveWeather } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { Stat } from "@/components/ui/field";
+import { ShareCard } from "@/components/dashboard/share-card";
 import { WhatIfCard } from "@/components/dashboard/what-if-card";
 import { CountUp } from "@/components/ui/count-up";
 import { Ring } from "@/components/ui/ring";
@@ -196,6 +197,8 @@ export default async function DashboardPage() {
           <TangibleImpact kgAvoided={progress.kgAvoided} />
         </div>
       ) : null}
+
+      {progress.points > 0 ? <ShareCard firstName={firstName} points={progress.points} kgAvoided={progress.kgAvoided} streak={progress.streak.current} level={progress.level.name} /> : null}
 
       <div style={{ marginBottom: "24px" }}>
         <LiveWeather pincode={user.pincode} householdSize={user.householdSize} snapshots={snapshots.slice(-2)} serverWeather={weather} serverNudgeIds={nudges.map((n) => n.id)} />

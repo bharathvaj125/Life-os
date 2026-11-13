@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError } from "@/components/ui/field";
 import { TermHelp } from "@/components/ui/term-help";
@@ -17,6 +17,49 @@ export interface FootprintFields {
   lpg: boolean;
   car: boolean;
   bike: boolean;
+}
+
+/**
+ * A monthly kilometre box with a way out for people who do not know their month: type the kilometres of a
+ * usual day and the number of days, and the monthly figure is filled in. The box stays editable afterwards.
+ * Only the monthly input has a name, so only it is sent to the server.
+ */
+function TravelField({ name, label, hint }: { name: string; label: string; hint: string }) {
+  const id = useId();
+  const monthly = useRef<HTMLInputElement>(null);
+  const [perDay, setPerDay] = useState("");
+  const [days, setDays] = useState("26");
+
+  function fill(perDayValue: string, daysValue: string) {
+    const total = Math.round(Number(perDayValue || 0) * Number(daysValue || 0) * 10) / 10;
+    const el = monthly.current;
+    if (!el || !Number.isFinite(total)) return;
+    // A real input event, so the form's live estimate recalculates as it does when a person types.
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(el, String(total));
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  return (
+    <div className="field">
+      <label htmlFor={`${id}-m`}>{label}</label>
+      <input id={`${id}-m`} ref={monthly} name={name} type="number" min={0} step="any" defaultValue={0} aria-describedby={`${id}-hint`} />
+      <small id={`${id}-hint`}>{hint}</small>
+      <details className="travel-helper">
+        <summary>Not sure about the month? Work it out from a usual day</summary>
+        <div className="travel-helper-grid">
+          <div>
+            <label htmlFor={`${id}-d`}>Km on a usual day</label>
+            <input id={`${id}-d`} type="number" min={0} step="any" inputMode="decimal" placeholder="e.g. 12" value={perDay} onChange={(e) => { setPerDay(e.target.value); fill(e.target.value, days); }} />
+          </div>
+          <div>
+            <label htmlFor={`${id}-n`}>Days a month</label>
+            <input id={`${id}-n`} type="number" min={1} max={31} step={1} inputMode="numeric" value={days} onChange={(e) => { setDays(e.target.value); fill(perDay, e.target.value); }} />
+          </div>
+        </div>
+        <small>Most people travel 22 to 26 days a month. The monthly box above fills in for you.</small>
+      </details>
+    </div>
+  );
 }
 
 /** Only asks about what the home has. `show` is all true when the equipment is unknown. */
@@ -128,39 +171,27 @@ export function FootprintForm({ defaultPeriod, show }: { defaultPeriod: string; 
 
       <fieldset>
         <legend style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span>Monthly Travel & Mobility (km, optional)</span>
+          <span>Monthly Travel &amp; Mobility (km, optional)</span>
           <TermHelp termKey="co2" />
         </legend>
         <div className="form-grid three" style={{ marginTop: "10px" }}>
           {show.car ? (
-            <Field
+            <TravelField
               label="Petrol / diesel car"
               name="carKm"
-              type="number"
-              min={0}
-              step="any"
-              defaultValue={0}
               hint={`e.g. 15 km/day is about 300 km a month (about ${Math.round(300 * EMISSION_FACTORS.carKgPerKm)} kg CO₂ at ${EMISSION_FACTORS.carKgPerKm} kg per km).`}
             />
           ) : null}
           {show.bike ? (
-            <Field
+            <TravelField
               label="Motorcycle / scooter"
               name="bikeKm"
-              type="number"
-              min={0}
-              step="any"
-              defaultValue={0}
               hint={`e.g. 10 km/day is about 200 km a month (about ${Math.round(200 * EMISSION_FACTORS.bikeKgPerKm)} kg CO₂ at ${EMISSION_FACTORS.bikeKgPerKm} kg per km).`}
             />
           ) : null}
-          <Field
+          <TravelField
             label="Bus / metro / train"
             name="publicKm"
-            type="number"
-            min={0}
-            step="any"
-            defaultValue={0}
             hint={`Lowest emissions per km (${EMISSION_FACTORS.publicKgPerKm} kg CO₂ per passenger-km).`}
           />
         </div>

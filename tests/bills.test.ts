@@ -169,3 +169,44 @@ describe("parsing details", () => {
     expect(normaliseConsumerNo(" 48001-234 567 ")).toBe("48001234567");
   });
 });
+
+// Layouts seen on Gujarat bills. These texts are written to match published label wording (UGVCL prints
+// "Past Reading" and "Reading Difference", Torrent prints "Service No." and a multiplying factor "MF"),
+// not copied from anyone's real bill.
+describe("other distribution company layouts", () => {
+  it("reads a bill that says Past Reading and Reading Difference", () => {
+    const bill = parseBillText("Consumer Number : 12345678901\nBilling Month : AUG-2026\nPast Reading 5400\nPresent Reading 5620\nReading Difference 220\nNet Amount Payable 1,540.00");
+    expect(bill.previousReading).toBe(5400);
+    expect(bill.currentReading).toBe(5620);
+    expect(bill.units).toBe(220);
+    expect(bill.month).toBe("2026-08");
+    expect(bill.amountInr).toBe(1540);
+    expect(validateBill(bill, NOW).status).toBe("scanned");
+  });
+  it("reads readings and units printed with decimals", () => {
+    const bill = parseBillText("Service No: 4801234567\nBill Month: Sep 2026\nPast Reading : 31711.260\nPresent Reading : 31752.880\nMF : 1.00\nUnits Consumed : 41.62");
+    expect(bill.consumerNo).toBe("4801234567");
+    expect(bill.previousReading).toBe(31711.26);
+    expect(bill.currentReading).toBe(31752.88);
+    expect(bill.units).toBe(41.62);
+    expect(bill.multiplier).toBe(1);
+    expect(validateBill(bill, NOW).status).toBe("scanned");
+  });
+  it("finds a large multiplier printed as MF with decimals", () => {
+    const bill = parseBillText("Consumer No: 4807654321\nBill Month: 07/2026\nPrevious Reading 100.00\nPresent Reading 140.00\nMF : 25.00\nUnits Consumed 1000");
+    expect(bill.multiplier).toBe(25);
+    expect(validateBill(bill, NOW).status).toBe("scanned");
+  });
+  it("accepts Contract Account and Meter Constant wording", () => {
+    const bill = parseBillText("Contract Account No: 400123456789\nBilling Cycle: October 2026\nOpening Reading 900\nClosing Reading 1100\nMeter Constant : 1\nNet Consumption 200");
+    expect(bill.consumerNo).toBe("400123456789");
+    expect(bill.month).toBe("2026-10");
+    expect(bill.units).toBe(200);
+    expect(validateBill(bill, NOW).status).toBe("scanned");
+  });
+  it("still recovers a colon read as 1 when the value has decimals", () => {
+    const bill = parseBillText("Consumer No: 4800123456\nBill Month: SEP-2026\nPrevious Reading : 14250.0\nPresent Reading 1 14532.0\nMultiplying Factor 1\nUnits Consumed 1282.00");
+    expect(bill.units).toBe(282);
+    expect(validateBill(bill, NOW).status).toBe("scanned");
+  });
+});

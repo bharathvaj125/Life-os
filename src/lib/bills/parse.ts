@@ -40,7 +40,7 @@ function afterLabel(line: string, label: RegExp): string | null {
  * value sits at the end. For a token that starts with "1" we also offer the token without it, since a colon
  * that OCR reads as "1" gets glued to the front of the value.
  */
-function candidates(lines: string[], label: RegExp, opts: { decimals?: boolean } = {}): number[] {
+function candidates(lines: string[], label: RegExp): number[] {
   const out: number[] = [];
   const push = (s: string) => {
     const n = Number(s);
@@ -49,21 +49,22 @@ function candidates(lines: string[], label: RegExp, opts: { decimals?: boolean }
   for (const line of lines) {
     const rest = afterLabel(line, label);
     if (rest === null) continue;
-    const tokens = numberTokens(rest).filter((t) => opts.decimals || !t.includes("."));
+    const tokens = numberTokens(rest);
     for (const t of [...tokens].reverse()) push(t);
-    for (const t of [...tokens].reverse()) if (t.length >= 2 && t.startsWith("1") && !t.includes(".")) push(t.slice(1));
+    // Only whole-number parts of two digits or more can have a glued-on colon: "1282.00" may be "282.00", but "1.5" is just 1.5.
+    for (const t of [...tokens].reverse()) if (/^1\d/.test(t)) push(t.slice(1));
   }
   return out;
 }
 
 const LABELS = {
-  consumer: /(consumer|service|connection|account|customer)\s*(no|number|id|#)\.?|\bk\s*no\b|con\.?\s*no\b/i,
-  previous: /(previous|prev\.?|last|opening|old)\s*(meter\s*)?(reading|rdg)|pre\.?\s*rdg/i,
-  current: /(present|current|new|closing|pres\.?)\s*(meter\s*)?(reading|rdg)/i,
-  units: /(units?\s*(consumed|billed)|consumption|net\s*units|total\s*units|billed\s*units|kwh\s*consumed|energy\s*consumed)/i,
-  multiplier: /(multiplying|multiplication|multiplier|mult\.?)\s*factor|\bmf\b/i,
-  amount: /((total\s*)?amount\s*(payable|due)|net\s*(amount|payable)|bill\s*amount|total\s*bill|payable\s*amount)/i,
-  month: /(bill(ing)?\s*(month|for)|for\s*the\s*month|month\s*of|bill\s*period|\bmonth\b)/i,
+  consumer: /(consumer|service|connection|account|customer|contract\s*account)\s*(no|number|id|#)\.?|\bk\s*no\b|con\.?\s*no\b|\bca\s*no\b/i,
+  previous: /(previous|prev\.?|prv\.?|past|last|earlier|opening|old)\s*(meter\s*)?(reading|rdg)|pre\.?\s*rdg/i,
+  current: /(present|current|latest|new|closing|pres\.?)\s*(meter\s*)?(reading|rdg)/i,
+  units: /(units?\s*(consumed|billed|charged)|consumption|net\s*units|total\s*units|billed\s*units|kwh\s*consumed|energy\s*consumed|reading\s*difference|difference\s*units|net\s*consumption)/i,
+  multiplier: /(multiplying|multiplication|multiplier|mult\.?|meter)\s*(factor|constant)|\bm\.?\s?f\.?\s*[:=]|\bmf\b|\bmeter\s*constant\b/i,
+  amount: /((total\s*)?amount\s*(payable|due)|net\s*(amount|payable)|bill\s*amount|total\s*bill|payable\s*amount|amount\s*to\s*be\s*paid|total\s*payable)/i,
+  month: /(bill(ing)?\s*(month|for|cycle)|for\s*the\s*month|month\s*of|bill\s*period|reading\s*month|\bmonth\b)/i,
 };
 
 /** Billing month from free text: "SEP-2026", "September 2026", "09/2026", "2026-09" or a date like "30-09-2026". */
@@ -154,7 +155,7 @@ export function parseBillText(text: string): ParsedBill {
     }
   }
 
-  const amounts = candidates(lines, LABELS.amount, { decimals: true });
+  const amounts = candidates(lines, LABELS.amount);
   if (amounts.length) result.amountInr = amounts[0];
   return result;
 }

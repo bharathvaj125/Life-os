@@ -11,10 +11,12 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | Brief requirement | What you get | Where |
 | --- | --- | --- |
 | **Personalised footprint tracker** | One-minute onboarding from last month's units, a baseline, monthly history and trend, travel and LPG add-ons, and a visible calculation | `/onboarding`, `/footprint`, `/dashboard` |
-| **Behavioural nudges and micro-tasks** | Rule-based suggestions from the user's own bills and the time of day (evening-peak alert, usage rise, AC season), plus 10 daily, weekly and one-time tasks | `/actions` |
+| **Behavioural nudges and micro-tasks** | Rule-based suggestions from the user's own bills and the time of day (evening-peak alert, usage rise, AC season), plus daily, weekly and one-time tasks. Some tasks only open at certain hours (midday tasks 10 AM to 3 PM India time) and the AC task switches itself off on a cool day. Both rules are enforced on the server | `/actions` |
 | **Gamification and social impact** | Points, streaks, levels, local and Gujarat-wide challenges with shared targets, opt-in leaderboards | `/community` |
 | **Actionable resource hub** | Rooftop solar estimator with ranges, assumptions and today's local sunshine; step-by-step path to apply; links to official bodies; a vendor directory where installers list themselves, an administrator approves each listing, and a verify-before-you-pay checklist points to the official lists | `/resources`, `/vendors`, `/installer` |
-| **State administrators** | Server-protected area view with small-group suppression, plus review of vendor listing requests | `/admin`, `/admin/vendors` |
+| **State administrators** | Server-protected area view with small-group suppression, a map, and review of vendor listing requests and photo proofs | `/admin`, `/admin/vendors`, `/admin/proofs` |
+| **Photo proof for big actions** | Swapping bulbs, buying a 5-star appliance and installing rooftop solar cannot be ticked. The household sends a photo (shrunk in the browser, location data dropped), an administrator approves or rejects it, the points are awarded on approval and the photo is deleted straight after either way. Approved households get a "Verified citizen" badge on the leaderboard | `/actions`, `/admin/proofs`, `/community` |
+| **Map view** | OpenStreetMap map of installer listings (with the citizen's own area) and of participating areas for administrators. Areas below the privacy threshold stay grey with no numbers. Positions come from the PIN code, so they show a city area, not a street address | `/vendors`, `/admin` |
 | **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
 | **Extra: live weather** | Today's forecast (Open-Meteo, no key) drives the AC and drying nudges and the solar insight | `/dashboard`, `/actions`, `/resources` |
 | **Roles** | Three kinds of sign-in, each with its own screens and menu: households, solar installers and GEDA administrators. Nobody sees screens meant for another role | `/`, `/register` |
@@ -275,24 +277,25 @@ tests/                  unit tests
 - **Emission factors are indicative.** Update `EMISSION_FACTORS` from the current CEA release before any official use.
 - **Solar subsidy and cost figures are assumptions**, labelled unverified in the app. Confirm on the PM Surya Ghar portal.
 - **Cleanest Hour is modelled**, not live grid data, and shows rupee effects only when the user supplies a peak surcharge.
-- **Tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap. The bill-based savings bonus is stronger, but the units are still typed in by the household, so it is not audited.
+- **Most tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap. The three high-impact one-time tasks need a photo that a person approves. That is a person looking at a picture, not proof the appliance is real.
+- **Time windows use the server clock in India time**, and the AC rule uses a city-level forecast. If no weather service answers, the AC rule steps aside instead of blocking anyone. The bill-based savings bonus is stronger, but the units are still typed in by the household, so it is not audited.
 - **Accounts are email and password.** Emails are not verified and there is no password reset, because the app does not send email. Sign-in and registration attempts are rate limited in memory, which suits one server process. Demo accounts are shared sandboxes: the demo administrator is view only, and demo households and installers cannot be edited.
 - **Vendor listings are reviewed by an administrator, not audited.** Empanelment claims are self-declared and the page tells citizens to verify them on the official lists. Sample listings are labelled as samples.
 - **Weather is a city-level forecast** for Gujarat PIN codes, not a measurement at the user's roof. The service is free and has no uptime guarantee, so pages work without it.
 - **Trust tiers are evidence-based, not self-declared.** A household is bill-scanned only while a scanned bill still matches its saved units. Nobody holds the smart-meter tier, because it is not built. The first three sample households of each area stand in for bill-scanned ones. Months below 20 kWh per person are flagged as unusually low, not rejected.
-- **The bill scanner proves consistency, not authenticity.** Readings that add up and a unique consumer number stop sloppy edits and double use, but a determined person could invent a consistent bill. Confirming with the distribution company or a smart meter is the next step. The scan runs in the browser, so the server trusts the numbers only after checking them again. Sample bills (consumer numbers starting 00000) can be scanned by any account so everyone can try the feature.
-- **No satellite roof tracing, map view or AI assistant** is implemented.
+- **The bill scanner knows the common Gujarat label wording** (consumer, service or contract account number; present, past, previous, opening or closing reading; reading difference; MF or meter constant; decimals) but only from published descriptions, not from a bank of real bills. When it cannot read a field the user types it. **The bill scanner proves consistency, not authenticity.** Readings that add up and a unique consumer number stop sloppy edits and double use, but a determined person could invent a consistent bill. Confirming with the distribution company or a smart meter is the next step. The scan runs in the browser, so the server trusts the numbers only after checking them again. Sample bills (consumer numbers starting 00000) can be scanned by any account so everyone can try the feature.
+- **No satellite roof tracing or AI assistant** is implemented. The maps use OpenStreetMap tiles, so they need an internet connection.
 - Demo households are sample data and are included in admin totals, flagged as demo.
 
 ## Roadmap
 
 1. Supabase Auth (verified email or phone OTP, password reset) replacing the app's own accounts, with per-user RLS policies.
 2. Confirming scanned bills with the distribution company or smart meter data (the OCR scan and review step are built).
-3. Roof outline on a map with PVGIS yield for the chosen location.
+3. Roof outline on the map with PVGIS yield for the chosen location.
 4. DISCOM tariff slabs and time-of-day rules from official GERC orders, with an effective-date audit trail.
 5. Hourly grid intensity from a published series to replace the illustrative Cleanest Hour curve.
 6. Aggregate views as SQL materialised views, Gujarati and Hindi interfaces, and push reminder notifications.
-7. A map view of vendors and community areas, and vendor listings imported from the official empanelment lists.
+7. Vendor listings imported from the official empanelment lists.
 
 ## Licence and credits
 

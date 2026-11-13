@@ -7,21 +7,24 @@ import { areaCentre } from "@/lib/maps/locate";
 import { requireViewer } from "@/lib/auth/viewer";
 import { num } from "@/lib/format";
 import { getAdminSummary } from "@/services/admin";
+import { listPendingProofs } from "@/services/proofs";
 import { listPendingVendors } from "@/services/vendors";
-import { Building2, Eye, EyeOff, MapPin, Store } from "lucide-react";
+import { Building2, Camera, Eye, EyeOff, MapPin, Store } from "lucide-react";
 
 export const metadata: Metadata = { title: "Administrator — Regional Aggregates" };
 
 export default async function AdminPage() {
   const viewer = await requireViewer("admin");
-  const [s, pendingVendors] = await Promise.all([getAdminSummary(), listPendingVendors()]);
+  const [s, pendingVendors, pendingProofs] = await Promise.all([getAdminSummary(), listPendingVendors(), listPendingProofs()]);
   // Same rule as the table: an area with fewer than k households gets a grey marker with no numbers.
   const areaMarkers: MapMarker[] = s.rows.flatMap((r): MapMarker[] => {
     const position = areaCentre(r.prefix);
     if (!position) return [];
     if (r.suppressed) return [{ id: r.prefix, position, kind: "bubble" as const, tone: "grey" as const, radius: 9, title: r.label, lines: [`Fewer than ${s.k} households, so no numbers are shown`] }];
     return [{ id: r.prefix, position, kind: "bubble" as const, tone: "green" as const, radius: Math.min(34, 10 + (r.households ?? 0) * 2), title: r.label, lines: [`${r.households} households`, `Average ${r.avgKwh} kWh a month`, `${r.totalKg} kg CO₂e in total`, `${r.actions} actions logged`] }];
-  });  return (
+  });
+
+  return (
     <>
       <p className="eyebrow">State Administrator · Regional Conservation Aggregates</p>
       <h1>Citizen Engagement by Postal Ward</h1>
@@ -57,6 +60,15 @@ export default async function AdminPage() {
             {pendingVendors.length === 0 ? "No requests are waiting for review." : `${pendingVendors.length} ${pendingVendors.length === 1 ? "listing is" : "listings are"} waiting for review.`}
           </p>
           <Link className="button button-outline" href="/admin/vendors">Open the review queue</Link>
+        </Card>
+      </div>
+
+      <div style={{ marginBottom: "24px" }}>
+        <Card title="Photo proof for high-impact actions" icon={<Camera size={20} className="card-icon" style={{ margin: 0 }} />}>
+          <p style={{ margin: "0 0 12px" }}>
+            {pendingProofs.length === 0 ? "No photos are waiting for review." : `${pendingProofs.length} ${pendingProofs.length === 1 ? "photo is" : "photos are"} waiting for review.`}
+          </p>
+          <Link className="button button-outline" href="/admin/proofs">Open the photo queue</Link>
         </Card>
       </div>
 

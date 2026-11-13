@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import type { Completion, Task, User } from "@/types";
+import type { Completion, Task, TaskProof, TaskProofStatus, User } from "@/types";
 import { getTask, taskApplies, taskBlockReason, tasksFor } from "@/features/gamification/tasks";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
 import { generateNudges } from "@/lib/calculations/nudges";
@@ -15,6 +15,8 @@ export interface TaskView extends Task {
   doneInWindow: boolean;
   /** Why it cannot be claimed right now (time window or weather), or null. */
   blockedReason: string | null;
+  /** For photo-proof tasks: where the household's photo stands. Null when none has been sent, or for ordinary tasks. */
+  proofStatus: TaskProofStatus | null;
 }
 
 /** Bill-based bonuses are monthly, so they count toward points and impact but not the daily cap or the daily streak. */
@@ -37,20 +39,32 @@ export async function getProgress(userId: string, now: Date = new Date()) {
 }
 
 export async function getActionsView(user: User, now: Date = new Date()) {
-  const [snapshots, progress, weather] = await Promise.all([listSnapshots(user.id), getProgress(user.id, now), getWeatherForPincode(user.pincode)]);
+  const [snapshots, progress, weather, proofs] = await Promise.all([listSnapshots(user.id), getProgress(user.id, now), getWeatherForPincode(user.pincode), getRepository().listTaskProofs({ userId: user.id })]);
   const today = istDate(now);
   const done = new Set(progress.completions.map((c) => c.dedupeKey));
   // The forecast Open-Meteo gave us, or failing that a second provider, so the AC rule can apply even when Open-Meteo refuses our server.
   const maxC = weather ? weather.today.maxC : await getTodayMaxTemp(user.pincode);
   const hour = istHour(now);
-  const tasks: TaskView[] = tasksFor(user.equipment, user.roofAccess).map((t) => ({ ...t, doneInWindow: done.has(dedupeKeyFor(t, today)), blockedReason: taskBlockReason(t, { hour, maxC }) }));
+  const tasks: TaskView[] = tasksFor(user.equipment, user.roofAccess).map((t) => ({ ...t, doneInWindow: done.has(dedupeKeyFor(t, today)), blockedReason: taskBlockReason(t, { hour, maxC }), proofStatus: latestProofStatus(proofs, t.id) }));
   return { nudges: generateNudges({ householdSize: user.householdSize, snapshots, now, weather, equipment: user.equipment, roofAccess: user.roofAccess }), tasks, progress, weather, snapshots };
 }
 
-export async function completeTask(user: User, taskId: string, now: Date = new Date()): Promise<Completion> {
+/** The newest proof for a task decides what the card shows. */
+function latestProofStatus(proofs: TaskProof[], taskId: string): TaskProofStatus | null {
+  const mine = proofs.filter((p) => p.taskId === taskId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return mine.length ? mine[mine.length - 1].status : null;
+}
+
+/**
+ * Ticks a task. Tasks that need a photo cannot be ticked here: they are awarded only when an administrator
+ * approves the photo, which calls this with `approvedProof`. An approved photo is already checked by a person,
+ * so it is not held back by the daily points cap.
+ */
+export async function completeTask(user: User, taskId: string, now: Date = new Date(), opts: { approvedProof?: boolean } = {}): Promise<Completion> {
   const task = getTask(taskId);
   if (!task) throw new ApiError(404, "That task does not exist.");
   if (!taskApplies(task, user.equipment, user.roofAccess)) throw new ApiError(403, "That task does not apply to your home.");
+  if (task.proof && !opts.approvedProof) throw new ApiError(403, "This one needs a photo. Send it from the Actions page and an administrator will check it.");
   // Only the AC task needs the forecast, so only it pays for a weather lookup.
   const blocked = taskBlockReason(task, { hour: istHour(now), maxC: task.id === "ac-setpoint" ? await getTodayMaxTemp(user.pincode) : null });
   if (blocked) throw new ApiError(403, blocked);
@@ -60,7 +74,7 @@ export async function completeTask(user: User, taskId: string, now: Date = new D
   const result = evaluateCompletion(
     task,
     new Set(mine.map((c) => c.dedupeKey)),
-    mine.filter((c) => c.completedOn === today && isHabit(c)).reduce((sum, c) => sum + c.points, 0),
+    opts.approvedProof ? 0 : mine.filter((c) => c.completedOn === today && isHabit(c)).reduce((sum, c) => sum + c.points, 0),
     today,
   );
   if (!result.ok) throw new ApiError(409, result.reason);

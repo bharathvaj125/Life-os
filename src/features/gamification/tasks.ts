@@ -7,7 +7,9 @@ export const TASKS: Task[] = [
   { id: "standby-off", title: "Switch standby devices off at the socket", description: "TV, set-top box, chargers and the printer.", category: "energy", cadence: "daily", points: 10, kwhSaved: 0.3, kgSaved: 0, assumption: "About 15 W of standby load for 20 hours." },
   { id: "geyser-short", title: "Cut the geyser time by 10 minutes", description: "Switch off before the water is fully hot and use the stored heat.", category: "energy", cadence: "daily", points: 10, kwhSaved: 0.5, kgSaved: 0, assumption: "A 3 kW geyser running 10 minutes less." },
   { id: "air-dry", title: "Air-dry the laundry this week", description: "Skip the dryer for a week.", category: "energy", cadence: "weekly", points: 20, kwhSaved: 4, kgSaved: 0, assumption: "Two dryer loads at about 2 kWh each." },
-  { id: "led-swap", title: "Replace old bulbs with LEDs", description: "Swap incandescent or CFL bulbs in the rooms you use most.", category: "energy", cadence: "once", points: 40, kwhSaved: 30, kgSaved: 0, assumption: "Four bulbs, 50 W saved each, 5 hours a day, counted once for one month." },
+  { id: "led-swap", title: "Replace old bulbs with LEDs", description: "Swap incandescent or CFL bulbs in the rooms you use most.", category: "energy", cadence: "once", points: 40, kwhSaved: 30, kgSaved: 0, assumption: "Four bulbs, 50 W saved each, 5 hours a day, counted once for one month.", proof: "photo" },
+  { id: "bee-appliance", title: "Buy a BEE 5-star appliance", description: "Replace an old fridge, AC or fan with a 5-star rated one. Send a photo of its energy label.", category: "energy", cadence: "once", points: 40, kwhSaved: 0, kgSaved: 0, assumption: "A reviewed photo earns the points. No saving is claimed until it shows on your bill.", proof: "photo" },
+  { id: "solar-installed", title: "Get rooftop solar installed", description: "Send a photo of your installed panels or the inverter. An administrator checks it.", category: "community", cadence: "once", points: 40, kwhSaved: 0, kgSaved: 0, assumption: "A reviewed photo earns the points. Real generation shows up on your meter and bill.", proof: "photo" },
   { id: "transit-day", title: "Leave the car at home for a day", description: "Use the bus, metro, a shared ride or walk.", category: "mobility", cadence: "weekly", points: 25, kwhSaved: 0, kgSaved: 1.4, assumption: "A 10 km trip by public transport instead of by car." },
   { id: "pressure-cook", title: "Use a pressure cooker for a meal", description: "Dal, rice or vegetables in a pressure cooker.", category: "cooking", cadence: "daily", points: 10, kwhSaved: 0, kgSaved: 0.15, assumption: "About 0.05 kg less LPG per meal." },
   { id: "join-challenge", title: "Join a community challenge", description: "Pick a goal on the Community page.", category: "community", cadence: "once", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Participation only, no saving claimed." },
@@ -31,6 +33,7 @@ const NEEDS: Record<string, (e: Equipment, roof: RoofAccess | undefined) => bool
   "ev-night-charge": (e) => e.ev !== "none",
   "pump-midday": (e) => e.waterPump,
   "solar-selfuse": (e) => e.rooftopSolar,
+  "solar-installed": (e) => e.rooftopSolar,
 };
 
 /**
@@ -40,7 +43,7 @@ const NEEDS: Record<string, (e: Equipment, roof: RoofAccess | undefined) => bool
 export function taskApplies(task: Task, equipment: Equipment | undefined, roof?: RoofAccess): boolean {
   const needs = NEEDS[task.id];
   if (!needs) return true;
-  if (!equipment) return !["ev-night-charge", "pump-midday", "solar-selfuse"].includes(task.id);
+  if (!equipment) return !["ev-night-charge", "pump-midday", "solar-selfuse", "solar-installed"].includes(task.id);
   return needs(equipment, roof);
 }
 

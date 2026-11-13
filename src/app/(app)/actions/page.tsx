@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { CompleteTaskButton } from "@/components/actions/complete-task-button";
 import { NudgeList } from "@/components/actions/nudge-list";
+import { ProofUpload } from "@/components/actions/proof-upload";
 import { LiveWeatherNudges } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
 import { formatHour } from "@/features/gamification/tasks";
 import { requireUser } from "@/lib/auth/session";
 import { num } from "@/lib/format";
-import { getActionsView } from "@/services/actions";
+import { getActionsView, type TaskView } from "@/services/actions";
 import { Flame, Shield, Sparkles, Zap } from "lucide-react";
 
 export const metadata: Metadata = { title: "Behavioural Nudges & Micro-Tasks" };
@@ -17,6 +18,11 @@ const CADENCE = {
   weekly: "Weekly Habit",
   once: "One-Time Action",
 } as const;
+
+/** Ordinary tasks are ticked; tasks that need a photo are sent for an administrator to check. */
+function TaskControl({ task: t }: { task: TaskView }) {
+  return t.proof ? <ProofUpload taskId={t.id} points={t.points} status={t.proofStatus} done={t.doneInWindow} /> : <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} blockedReason={t.blockedReason} />;
+}
 
 export default async function ActionsPage() {
   const user = await requireUser();
@@ -116,12 +122,13 @@ export default async function ActionsPage() {
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>
                 {t.window ? <span className="chip">{formatHour(t.window.fromHour)} to {formatHour(t.window.toHour)}</span> : null}
+                {t.proof ? <span className="chip">Photo proof</span> : null}
               </div>
               <p style={{ minHeight: "44px" }}>{t.description}</p>
               <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
                 <strong>Impact Model:</strong> {t.assumption}
               </p>
-              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} blockedReason={t.blockedReason} />
+              <TaskControl task={t} />
             </Card>
           ))}
         </div>
@@ -138,12 +145,13 @@ export default async function ActionsPage() {
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>
                 {t.window ? <span className="chip">{formatHour(t.window.fromHour)} to {formatHour(t.window.toHour)}</span> : null}
+                {t.proof ? <span className="chip">Photo proof</span> : null}
               </div>
               <p style={{ minHeight: "44px" }}>{t.description}</p>
               <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
                 <strong>Impact Model:</strong> {t.assumption}
               </p>
-              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} blockedReason={t.blockedReason} />
+              <TaskControl task={t} />
             </Card>
           ))}
         </div>

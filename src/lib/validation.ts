@@ -58,6 +58,13 @@ const needsContact = { message: "Add a phone number or a website so citizens can
 
 export const vendorSchema = z.object(vendorFields).refine((v) => v.phone || v.website, needsContact);
 
+/** A photo as a small JPEG data URL. The browser shrinks it first; this is the server's own limit and check. */
+export const MAX_PROOF_CHARS = 450_000;
+export const proofSchema = z.object({
+  image: z.string().max(MAX_PROOF_CHARS, "That photo is too large. Try again with a smaller one.").regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]+=*$/, "Send the photo as a JPEG image."),
+});
+export const proofReviewSchema = z.object({ decision: z.enum(["approved", "rejected"]) });
+
 export const vendorReviewSchema = z.object({ decision: z.enum(["approved", "rejected"]) });
 
 const flag = z.boolean();

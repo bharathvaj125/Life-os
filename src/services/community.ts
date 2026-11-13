@@ -6,6 +6,7 @@ import { istDate } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { ApiError } from "@/lib/api";
 import { completeTask } from "./actions";
+import { photoVerifiedUserIds } from "./proofs";
 
 /** The first three sample households of each area stand in for bill-scanned ones. The tier is not stored for them in the database. */
 const sampleBillScanned = /^demo-\d{3}-[123]$/;
@@ -20,11 +21,13 @@ export interface LeaderRow {
   isYou: boolean;
   isDemo: boolean;
   verificationTier: "self_reported" | "bill_verified" | "smart_meter";
+  /** An administrator approved a photo for this household. */
+  photoVerified: boolean;
 }
 
 export async function getCommunityView(user: User, now: Date = new Date()) {
   const repo = getRepository();
-  const [challenges, memberships, completions, everyone, proofs, snapshots] = await Promise.all([repo.listChallenges(), repo.listMemberships(), repo.listCompletions(), repo.listUsers(), repo.listBillProofs(), repo.listSnapshots()]);
+  const [challenges, memberships, completions, everyone, proofs, snapshots, photoVerified] = await Promise.all([repo.listChallenges(), repo.listMemberships(), repo.listCompletions(), repo.listUsers(), repo.listBillProofs(), repo.listSnapshots(), photoVerifiedUserIds()]);
   // Installers and administrators are not households, so they never appear on leaderboards.
   const users = everyone.filter((u) => u.role === "citizen");
   const today = istDate(now);
@@ -60,6 +63,7 @@ export async function getCommunityView(user: User, now: Date = new Date()) {
         isYou: u.id === user.id,
         isDemo: u.isDemo,
         verificationTier: tierOf(u),
+        photoVerified: photoVerified.has(u.id),
       }));
 
   const trim = (rows: LeaderRow[]) => {

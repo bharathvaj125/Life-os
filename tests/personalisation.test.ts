@@ -36,8 +36,8 @@ describe("which tasks apply to a home", () => {
     const unknown = ids(tasksFor(undefined));
     expect(unknown).toContain("ac-setpoint");
     expect(unknown).toContain("geyser-short");
-    for (const needs of ["ev-night-charge", "pump-midday", "solar-selfuse"]) expect(unknown).not.toContain(needs);
-    expect(unknown.length).toBe(TASKS.length - 3);
+    for (const needs of ["ev-night-charge", "pump-midday", "solar-selfuse", "solar-installed"]) expect(unknown).not.toContain(needs);
+    expect(unknown.length).toBe(TASKS.length - 4);
   });
 });
 

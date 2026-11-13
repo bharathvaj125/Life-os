@@ -5,7 +5,7 @@ import type { LeaderRow } from "@/services/community";
 import { GUJARAT_DISTRICT_LIST, regionLabel } from "@/lib/calculations/aggregate";
 import { num } from "@/lib/format";
 import { TermHelp } from "@/components/ui/term-help";
-import { MapPin, Search, ShieldCheck } from "lucide-react";
+import { BadgeCheck, MapPin, Search, ShieldCheck } from "lucide-react";
 
 interface LeaderboardViewProps {
   allRows: LeaderRow[];
@@ -231,6 +231,11 @@ export function LeaderboardView({ allRows, userPrefix, userRegion }: Leaderboard
                       {r.isYou ? (
                         <span className="chip surya" style={{ fontSize: "11px", marginLeft: "6px" }}>
                           You
+                        </span>
+                      ) : null}
+                      {r.photoVerified ? (
+                        <span className="chip" title="An administrator approved a photo of a real action" style={{ fontSize: "11px", marginLeft: "6px", background: "var(--forest-50)", color: "var(--forest-800)", borderColor: "var(--forest-100)" }}>
+                          <BadgeCheck size={12} aria-hidden="true" /> Verified citizen
                         </span>
                       ) : null}
                     </td>

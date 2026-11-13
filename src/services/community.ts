@@ -11,10 +11,12 @@ export interface LeaderRow {
   rank: number;
   displayName: string;
   region: string;
+  pincodePrefix: string;
   points: number;
   level: string;
   isYou: boolean;
   isDemo: boolean;
+  verificationTier: "self_reported" | "bill_verified" | "smart_meter";
 }
 
 export async function getCommunityView(user: User, now: Date = new Date()) {
@@ -31,24 +33,44 @@ export async function getCommunityView(user: User, now: Date = new Date()) {
   const points = new Map<string, number>();
   for (const c of completions) points.set(c.userId, (points.get(c.userId) ?? 0) + c.points);
 
+  // Helper to determine tier fallback
+  const tierOf = (u: User): "self_reported" | "bill_verified" | "smart_meter" =>
+    u.verificationTier ?? (u.isDemo ? (Number(u.id.slice(-1)) % 3 === 0 ? "smart_meter" : Number(u.id.slice(-1)) % 2 === 0 ? "bill_verified" : "self_reported") : "self_reported");
+
   // Only people who opted in appear, plus you, so you can always see your own standing.
   const board = (scope: (u: User) => boolean): LeaderRow[] =>
     users
       .filter((u) => (u.leaderboardOptIn || u.id === user.id) && scope(u))
       .map((u) => ({ u, p: points.get(u.id) ?? 0 }))
       .sort((a, b) => b.p - a.p || a.u.displayName.localeCompare(b.u.displayName))
-      .map(({ u, p }, i) => ({ rank: i + 1, displayName: u.displayName, region: regionLabel(regionOf(u.pincode)), points: p, level: levelFor(p).name, isYou: u.id === user.id, isDemo: u.isDemo }));
+      .map(({ u, p }, i) => ({
+        rank: i + 1,
+        displayName: u.displayName,
+        region: regionLabel(regionOf(u.pincode)),
+        pincodePrefix: regionOf(u.pincode),
+        points: p,
+        level: levelFor(p).name,
+        isYou: u.id === user.id,
+        isDemo: u.isDemo,
+        verificationTier: tierOf(u),
+      }));
 
   const trim = (rows: LeaderRow[]) => {
-    const top = rows.slice(0, 10);
+    const top = rows.slice(0, 15);
     const you = rows.find((r) => r.isYou);
     return you && !top.includes(you) ? [...top, you] : top;
   };
 
+  const statewideRows = board(() => true);
+  const localRows = board((u) => regionOf(u.pincode) === prefix);
+
   return {
     challenges: visible,
-    local: { label: regionLabel(prefix), rows: trim(board((u) => regionOf(u.pincode) === prefix)) },
-    statewide: { rows: trim(board(() => true)) },
+    userPrefix: prefix,
+    userRegion: regionLabel(prefix),
+    local: { label: regionLabel(prefix), rows: trim(localRows) },
+    statewide: { rows: trim(statewideRows) },
+    allRows: statewideRows, // Full list so client can filter by any district or tier seamlessly
     includesDemo: users.some((u) => u.isDemo),
   };
 }

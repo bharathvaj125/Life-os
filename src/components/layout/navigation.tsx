@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Leaf, Sun, Zap } from "lucide-react";
 
+import { GuidedTour } from "@/components/guide/guided-tour";
+
 const links = [
   ["/dashboard", "Dashboard"],
   ["/footprint", "Footprint"],
@@ -67,10 +69,13 @@ export function Navigation() {
           ))}
         </nav>
 
-        <div className={`header-status ${istInfo.isPeak ? "peak" : ""}`} title="Current India Standard Time grid phase">
-          <div className={`status-dot ${istInfo.isPeak ? "peak" : ""}`} aria-hidden="true" />
-          {istInfo.isPeak ? <Zap size={13} style={{ color: "var(--surya-600)" }} /> : <Sun size={13} style={{ color: "var(--forest-600)" }} />}
-          <span>{istInfo.label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <GuidedTour />
+          <div className={`header-status ${istInfo.isPeak ? "peak" : ""}`} title="Current India Standard Time grid phase">
+            <div className={`status-dot ${istInfo.isPeak ? "peak" : ""}`} aria-hidden="true" />
+            {istInfo.isPeak ? <Zap size={13} style={{ color: "var(--surya-600)" }} /> : <Sun size={13} style={{ color: "var(--forest-600)" }} />}
+            <span>{istInfo.label}</span>
+          </div>
         </div>
       </div>
     </header>

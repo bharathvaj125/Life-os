@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError } from "@/components/ui/field";
+import { TermHelp } from "@/components/ui/term-help";
 import { calculateFootprint } from "@/lib/calculations/footprint";
 import { callApi } from "@/lib/client-api";
 import { useAction } from "@/lib/use-action";
@@ -64,7 +65,12 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
     <form onSubmit={submit} onChange={handleFormChange} className="form" noValidate>
       <div className="form-grid">
         <Field
-          label="Billing month"
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              Billing month
+              <TermHelp termKey="cea" />
+            </span>
+          }
           name="period"
           type="month"
           defaultValue={defaultPeriod}
@@ -73,14 +79,19 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
           hint="Re-saving an existing month updates your previous record."
         />
         <Field
-          label="Electricity units (kWh)"
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              Electricity units (kWh)
+              <TermHelp termKey="kwh" />
+            </span>
+          }
           name="electricityKwh"
           type="number"
           min={1}
           step="any"
           required
           placeholder="e.g. 210"
-          hint="Primary driver of household scope-2 carbon emissions."
+          hint="Typical: 150–250 kWh/mo (2BHK flat); 350+ kWh with summer AC."
         />
       </div>
 
@@ -102,13 +113,14 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
           max={10}
           step="0.25"
           defaultValue={0}
-          hint="42.3 kg CO₂ per standard cylinder."
+          hint="1 cylinder ≈ 30–45 days for 4 persons (42.3 kg CO₂ / cylinder)."
         />
       </div>
 
       <fieldset>
         <legend style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span>Monthly Travel & Mobility (km, optional)</span>
+          <TermHelp termKey="co2" />
         </legend>
         <div className="form-grid three" style={{ marginTop: "10px" }}>
           <Field
@@ -118,7 +130,7 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
             min={0}
             step="any"
             defaultValue={0}
-            hint="0.17 kg CO₂ / km"
+            hint="e.g. 15 km/day ≈ 300 km/mo (~20 L fuel ≈ 51 kg CO₂)"
           />
           <Field
             label="Motorcycle / scooter"
@@ -127,7 +139,7 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
             min={0}
             step="any"
             defaultValue={0}
-            hint="0.04 kg CO₂ / km"
+            hint="e.g. 10 km/day ≈ 200 km/mo (~4 L fuel ≈ 8 kg CO₂)"
           />
           <Field
             label="Bus / metro / train"
@@ -136,7 +148,7 @@ export function FootprintForm({ defaultPeriod }: { defaultPeriod: string }) {
             min={0}
             step="any"
             defaultValue={0}
-            hint="0.02 kg CO₂ / km"
+            hint="Low emissions (0.02 kg CO₂/km) · 3x greener than bike"
           />
         </div>
       </fieldset>

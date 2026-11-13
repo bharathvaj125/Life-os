@@ -1,5 +1,6 @@
 export type Cadence = "daily" | "weekly" | "once";
 export type TaskCategory = "energy" | "mobility" | "cooking" | "community";
+export type VerificationTier = "self_reported" | "bill_verified" | "smart_meter";
 
 export interface User {
   id: string;
@@ -8,6 +9,8 @@ export interface User {
   householdSize: number;
   leaderboardOptIn: boolean;
   isDemo: boolean;
+  /** Verification tier for community trust: self-reported, bill-verified with proof, or smart-meter */
+  verificationTier?: VerificationTier;
   /** Set once the household adds an account, so it can sign in from another device. Never the password. */
   email?: string;
   createdAt: string;

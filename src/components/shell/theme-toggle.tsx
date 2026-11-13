@@ -1,34 +1,60 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Monitor, Moon, Sun } from "lucide-react";
 
-type Theme = "dark" | "light";
+type Pref = "system" | "light" | "dark";
+const ORDER: Pref[] = ["system", "light", "dark"];
+const LABEL: Record<Pref, string> = { system: "Match my device", light: "Light", dark: "Dark" };
 
-const read = (): Theme => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
-const subscribe = (cb: () => void) => {
-  const observer = new MutationObserver(cb);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  return () => observer.disconnect();
+const stored = (): Pref => {
+  try {
+    const t = localStorage.getItem("lifeos-theme");
+    return t === "light" || t === "dark" ? t : "system";
+  } catch {
+    return "system";
+  }
 };
 
-/** Switches between the dark and light themes and remembers the choice on this device. */
-export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, read, () => "dark" as Theme);
-  const next: Theme = theme === "dark" ? "light" : "dark";
+/** Applies a preference. "System" follows the device's own light or dark setting and keeps following it if that changes. */
+function apply(pref: Pref) {
+  const dark = pref === "system" ? window.matchMedia("(prefers-color-scheme: dark)").matches : pref === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.documentElement.dataset.themePref = pref;
+}
 
-  function toggle() {
-    document.documentElement.dataset.theme = next;
+/** Cycles Match my device, Light and Dark, and remembers the choice on this device. The default matches the device. */
+export function ThemeToggle() {
+  const [pref, setPref] = useState<Pref>("system");
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setPref(stored()));
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => stored() === "system" && apply("system");
+    mq.addEventListener("change", onChange);
+    return () => {
+      cancelAnimationFrame(frame);
+      mq.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  function cycle() {
+    const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
+    setPref(next);
+    apply(next);
     try {
-      localStorage.setItem("lifeos-theme", next);
+      if (next === "system") localStorage.removeItem("lifeos-theme");
+      else localStorage.setItem("lifeos-theme", next);
     } catch {
       // Private browsing: the choice just will not be remembered.
     }
   }
 
+  const Icon = pref === "system" ? Monitor : pref === "light" ? Sun : Moon;
+  const nextLabel = LABEL[ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]];
   return (
-    <button type="button" className="icon-button" onClick={toggle} aria-label={`Switch to ${next} theme`} title={`Switch to ${next} theme`}>
-      {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+    <button type="button" className="icon-button" onClick={cycle} aria-label={`Theme: ${LABEL[pref]}. Switch to ${nextLabel}`} title={`Theme: ${LABEL[pref]} (press for ${nextLabel})`}>
+      <Icon size={18} aria-hidden="true" />
     </button>
   );
 }

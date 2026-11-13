@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 import { istClock } from "@/lib/calculations/day";
 import { EMBLEM_INNER, EMBLEM_VIEWBOX } from "./emblem-inner";
 
@@ -12,6 +12,9 @@ import { EMBLEM_INNER, EMBLEM_VIEWBOX } from "./emblem-inner";
  */
 export function BrandMark({ size = 46 }: { size?: number }) {
   const svg = useRef<SVGSVGElement>(null);
+  // Every copy of the emblem gets its own gradient names: a hidden copy (such as the opening animation) must not steal them.
+  const uid = useId().replace(/:/g, "");
+  const inner = useMemo(() => EMBLEM_INNER.replace(/id="be-([a-z0-9]+)"/g, `id="be-$1-${uid}"`).replace(/url\(#be-([a-z0-9]+)\)/g, `url(#be-$1-${uid})`), [uid]);
 
   useEffect(() => {
     const sun = svg.current?.querySelector<SVGGElement>(".be-sun");
@@ -29,7 +32,7 @@ export function BrandMark({ size = 46 }: { size?: number }) {
   }, []);
 
   return (
-    <svg ref={svg} className="emblem" viewBox={EMBLEM_VIEWBOX} width={size} height={(size * 200) / 192} aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: EMBLEM_INNER }} />
+    <svg ref={svg} className="emblem" viewBox={EMBLEM_VIEWBOX} width={size} height={(size * 200) / 192} aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: inner }} />
   );
 }
 

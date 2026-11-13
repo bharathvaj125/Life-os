@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, FileText, Sun } from "lucide-react";
+import { SolarScene } from "@/components/brand/solar-scene";
 import { SolarCalculator } from "@/components/solar/solar-calculator";
 import { Card } from "@/components/ui/card";
 import { locateByPincode } from "@/lib/maps/locate";
@@ -20,8 +21,9 @@ export default async function ResourcesPage() {
 
   return (
     <>
-      <p className="eyebrow">Requirement 4 · Actionable Resource Hub</p>
+      <p className="eyebrow">Rooftop solar</p>
       <h1>From Intent to Rooftop</h1>
+      <SolarScene compact />
       <p className="intro">
         Explore rooftop solar feasibility for your property, calculate your PM Surya Ghar central subsidy entitlement, and access verified government energy transition resources.
       </p>

@@ -1,3 +1,4 @@
+import { IntroSplash } from "@/components/brand/intro-splash";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { RegisterServiceWorker } from "@/components/layout/register-sw";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#06130D", width: "device-width", initialScale: 1 };
 
 /** Runs before the page paints, so the saved theme (dark by default) never flashes the wrong colours. */
-const themeScript = `try{var t=localStorage.getItem('lifeos-theme');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}`;
+const themeScript = `try{var d=document.documentElement,t=localStorage.getItem('lifeos-theme'),m=window.matchMedia('(prefers-color-scheme: light)').matches;d.dataset.theme=t==='light'||(t!=='dark'&&m)?'light':'dark';d.dataset.themePref=t==='light'||t==='dark'?t:'system';if(!sessionStorage.getItem('lifeos-intro')&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)d.dataset.intro='1'}catch(e){document.documentElement.dataset.theme='dark'}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <IntroSplash />
         <RegisterServiceWorker />
         {children}
       </body>

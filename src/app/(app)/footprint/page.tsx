@@ -31,7 +31,7 @@ export default async function FootprintPage() {
 
   return (
     <>
-      <p className="eyebrow">Requirement 1 · Personalised Footprint Tracker</p>
+      <p className="eyebrow">Footprint tracker</p>
       <h1>Your Carbon Baseline & History</h1>
       <p className="intro">
         Your first month forms your baseline. As you adopt energy-saving habits and log each new bill, see your trajectory in kilograms of CO₂ equivalent. If your units fall by 5% or more against last month, you earn a bill savings bonus.

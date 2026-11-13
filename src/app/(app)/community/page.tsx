@@ -19,7 +19,7 @@ export default async function CommunityPage() {
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <p className="eyebrow">Requirement 3 · Gamification & Social Impact</p>
+          <p className="eyebrow">Community & leaderboards</p>
           <h1>Community Action Across Gujarat</h1>
           <p className="intro" style={{ marginBottom: "16px" }}>
             Collective sustainability goals for your neighborhood and district. Individual mindful habits combine into measurable megawatt-hours saved and tons of carbon avoided.

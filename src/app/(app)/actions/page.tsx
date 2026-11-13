@@ -34,7 +34,7 @@ export default async function ActionsPage() {
 
   return (
     <>
-      <p className="eyebrow">Requirement 2 · Behavioural Nudges & Micro-Tasks</p>
+      <p className="eyebrow">Nudges & micro-tasks</p>
       <h1>Actionable Everyday Habits</h1>
       <p className="intro">
         Nudges are automatically triggered by your household consumption patterns and the active time of day. Log each completed action to claim points towards community goals.

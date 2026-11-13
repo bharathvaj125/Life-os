@@ -13,7 +13,7 @@ export default async function QuotesPage() {
   const threads = await listCitizenQuotes(user);
   return (
     <>
-      <p className="eyebrow">Requirement 4 · Actionable Resource Hub</p>
+      <p className="eyebrow">Quotes</p>
       <h1>My quote requests</h1>
       <p className="intro">Conversations with the installers you asked. They see your first name and area, and the message you wrote. Nothing else about you.</p>
       {threads.length === 0 ? (

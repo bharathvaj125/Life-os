@@ -5,7 +5,7 @@ import { BrandLockup } from "@/components/brand/brand-logo";
 import { AdminLogin } from "@/components/admin/admin-controls";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { DemoAccounts } from "@/components/welcome/demo-accounts";
-import { HourMosaic } from "@/components/welcome/hour-mosaic";
+import { SolarScene } from "@/components/brand/solar-scene";
 import { SignInForm } from "@/components/welcome/sign-in-form";
 import { getViewer, homeFor } from "@/lib/auth/viewer";
 import { adminEnabled } from "@/lib/auth/session";
@@ -36,7 +36,7 @@ export default async function WelcomePage() {
           <p style={{ fontSize: "18px", maxWidth: "540px" }}>
             Turn one electricity bill into a footprint, tips for the equipment you actually own, community goals and a rooftop solar plan.
           </p>
-          <HourMosaic />
+          <SolarScene />
         </div>
 
         <div className="auth-stats">

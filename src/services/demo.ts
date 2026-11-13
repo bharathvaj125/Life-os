@@ -12,7 +12,11 @@ import { loadDemoData } from "./admin";
 export async function ensureDemoAccount(key: DemoKey, now: Date = new Date()): Promise<User> {
   const repo = getRepository();
   const existing = await repo.getUser(demoUserId(key));
-  if (existing) return existing;
+  if (existing) {
+    // Demo accounts made earlier keep their data but pick up the current display name.
+    const current = buildDemoAccount(key, now).user.displayName;
+    return existing.displayName === current ? existing : ((await repo.updateUser(existing.id, { displayName: current })) ?? existing);
+  }
 
   // The first demo visit on a fresh database also loads the sample households and vendors, so nothing looks empty.
   await loadDemoData().catch(() => undefined);

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, MessageSquare, ShieldAlert } from "lucide-react";
+import { SolarScene } from "@/components/brand/solar-scene";
 import { Card } from "@/components/ui/card";
 import { VendorExplorer, type ExplorerVendor } from "@/components/vendors/vendor-explorer";
 import { OFFICIAL_VENDOR_CHECKS, VENDOR_SERVICE_IDS, VERIFY_STEPS } from "@/features/vendors/catalog";
@@ -28,8 +29,9 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <p className="eyebrow">Requirement 4 · Actionable Resource Hub</p>
+      <p className="eyebrow">Vendors</p>
       <h1>Find a Sustainable Energy Vendor</h1>
+      <SolarScene compact />
       <p className="intro">
         Search by PIN code or place, or use your location. The nearest come first. Installers register here and an administrator reviews each listing; official bodies and companies are listed from their own public websites. Registered installers can take a quote request and reply to you in a conversation.
       </p>

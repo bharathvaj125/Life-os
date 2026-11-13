@@ -22,7 +22,7 @@ interface Spec {
 const SPECS: Record<DemoKey, Spec> = {
   patel: {
     user: {
-      role: "citizen", displayName: "Patel family (demo)", pincode: "380015", householdSize: 4, homeType: "apartment", ownership: "tenant", roofAccess: "shared",
+      role: "citizen", displayName: "Anika Trivedi (demo)", pincode: "380015", householdSize: 4, homeType: "apartment", ownership: "tenant", roofAccess: "shared",
       equipment: equip({ acCount: 2, geyser: true, washingMachine: true, lpg: true, petrolTwoWheeler: true, inverterBattery: true }),
     },
     kwh: [318, 301, 276],
@@ -33,7 +33,7 @@ const SPECS: Record<DemoKey, Spec> = {
   },
   desai: {
     user: {
-      role: "citizen", displayName: "Desai home (demo)", pincode: "395003", householdSize: 3, homeType: "independent", ownership: "owner", roofAccess: "own",
+      role: "citizen", displayName: "Rohan Parmar (demo)", pincode: "395003", householdSize: 3, homeType: "independent", ownership: "owner", roofAccess: "own",
       equipment: equip({ acCount: 1, washingMachine: true, waterPump: true, inductionStove: true, ev: "two-wheeler", rooftopSolar: true }),
     },
     kwh: [236, 228, 205],

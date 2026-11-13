@@ -101,11 +101,26 @@ export const registerInstallerSchema = z.object({ email: emailField, password: p
 
 export const demoLoginSchema = z.object({ key: z.enum(["patel", "desai", "installer", "admin"]) });
 
+const billNumber = (max: number, label: string) => z.coerce.number({ error: `${label} must be a number` }).min(0, `${label} cannot be negative`).max(max, `${label} looks too high`);
+
+/** A scanned bill as confirmed by the user. The server re-checks every number, so nothing here is trusted. */
+export const billSchema = z.object({
+  period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Pick a valid billing month"),
+  consumerNo: z.string().trim().min(8, "Enter the consumer number").max(30, "That consumer number is too long"),
+  previousReading: billNumber(100000000, "Previous reading"),
+  currentReading: billNumber(100000000, "Present reading"),
+  multiplier: z.preprocess((v) => (v === "" || v === null || v === undefined ? 1 : v), billNumber(1000, "Multiplier").refine((n) => n > 0, "Multiplier must be above zero")),
+  units: billNumber(100000, "Units"),
+  amountInr: z.preprocess((v) => (v === "" || v === null ? undefined : v), billNumber(500000, "Bill amount").optional()),
+  source: z.enum(["image", "pdf"]),
+});
+
 export const adminLoginSchema =z.object({ code: z.string().min(1, "Enter the access code").max(200) });
 
 export type FootprintBody = z.infer<typeof footprintSchema>;
 export type OnboardingBody = z.infer<typeof onboardingSchema>;
 export type VendorBody = z.infer<typeof vendorSchema>;
+export type BillBody = z.infer<typeof billSchema>;
 export type AccountBody = z.infer<typeof accountSchema>;
 export type LoginBody = z.infer<typeof loginSchema>;
 export type HomeProfileBody = z.infer<typeof homeProfileSchema>;

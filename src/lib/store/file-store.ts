@@ -23,6 +23,7 @@ function load(): Promise<StoreData> {
       // Files written before vendors existed get the sample listings so the directory is never empty.
       data.vendors ??= buildSeed(new Date()).vendors;
       data.credentials ??= [];
+      data.billProofs ??= [];
       for (const u of data.users) u.role ??= "citizen";
       return data;
     } catch {
@@ -116,6 +117,23 @@ export const fileStore: Repository = {
   },
   async listMemberships() {
     return (await load()).memberships;
+  },
+
+  async upsertBillProof(proof) {
+    return mutate((d) => {
+      if (d.billProofs.some((p) => p.consumerHash === proof.consumerHash && p.period === proof.period && p.userId !== proof.userId)) return { ok: false as const, reason: "duplicate" as const };
+      const i = d.billProofs.findIndex((p) => p.userId === proof.userId && p.period === proof.period);
+      if (i >= 0) d.billProofs[i] = { ...proof, id: d.billProofs[i].id };
+      else d.billProofs.push(proof);
+      return { ok: true as const };
+    });
+  },
+  async listBillProofs(userId) {
+    const all = (await load()).billProofs;
+    return userId ? all.filter((p) => p.userId === userId) : all;
+  },
+  async findBillProof(consumerHash, period) {
+    return (await load()).billProofs.find((p) => p.consumerHash === consumerHash && p.period === period) ?? null;
   },
 
   async listVendors() {

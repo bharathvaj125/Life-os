@@ -67,7 +67,7 @@ export function buildSeed(now: Date): StoreData {
     }
   });
 
-  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i), vendors: buildSampleVendors(createdAt), credentials: [] };
+  return { users, snapshots, completions, challenges, memberships: memberships.filter((m, i, all) => all.findIndex((x) => x.challengeId === m.challengeId && x.userId === m.userId) === i), vendors: buildSampleVendors(createdAt), credentials: [], billProofs: [] };
 }
 
 /**

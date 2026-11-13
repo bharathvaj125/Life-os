@@ -1,4 +1,4 @@
-import type { Challenge, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
+import type { BillProof, Challenge, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
 
 /**
  * Persistence boundary. Services depend only on this interface, so the local JSON store used for
@@ -25,6 +25,12 @@ export interface Repository {
   listChallenges(): Promise<Challenge[]>;
   joinChallenge(membership: Membership): Promise<void>;
   listMemberships(): Promise<Membership[]>;
+
+  /** One proof per user and month. Fails with "duplicate" when another user already used the same consumer number for that month. */
+  upsertBillProof(proof: BillProof): Promise<{ ok: true } | { ok: false; reason: "duplicate" }>;
+  listBillProofs(userId?: string): Promise<BillProof[]>;
+  /** The proof for this consumer number fingerprint and month, whoever owns it. */
+  findBillProof(consumerHash: string, period: string): Promise<BillProof | null>;
 
   listVendors(): Promise<Vendor[]>;
   addVendor(vendor: Vendor): Promise<Vendor>;

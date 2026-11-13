@@ -8,14 +8,16 @@ import { formatPeriod, istPeriod } from "@/lib/dates";
 import { num } from "@/lib/format";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
 import { getProgress } from "@/services/actions";
+import { BillScanner } from "@/components/bills/bill-scanner";
+import { scannedPeriods } from "@/services/bills";
 import { getFootprintView } from "@/services/footprint";
-import { ArrowDownRight, ArrowUpRight, BarChart3, BookOpen, Leaf, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BadgeCheck, BarChart3, BookOpen, Leaf, ScanLine, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = { title: "Personalised Footprint Tracker" };
 
 export default async function FootprintPage() {
   const user = await requireUser();
-  const [{ snapshots, trend }, { completions }] = await Promise.all([getFootprintView(user.id), getProgress(user.id)]);
+  const [{ snapshots, trend }, { completions }, scanned] = await Promise.all([getFootprintView(user.id), getProgress(user.id), scannedPeriods(user.id)]);
   const bonusByPeriod = new Map(completions.filter((c) => c.taskId === BILL_SAVINGS_TASK_ID).map((c) => [c.dedupeKey.slice(BILL_SAVINGS_TASK_ID.length + 1), c.points]));
   const eq = user.equipment;
   const show = { lpg: eq ? eq.lpg : true, car: eq ? eq.petrolCar : true, bike: eq ? eq.petrolTwoWheeler : true };
@@ -56,6 +58,10 @@ export default async function FootprintPage() {
           </div>
         </div>
       ) : null}
+
+      <Card title="Scan your bill" className="card-accent-surya" icon={<ScanLine size={20} className="card-icon surya" style={{ margin: 0 }} />}>
+        <BillScanner />
+      </Card>
 
       <div className="split">
         <Card title="Emissions Trajectory" className="card-accent-green" icon={<BarChart3 size={20} className="card-icon" style={{ margin: 0 }} />}>
@@ -100,6 +106,15 @@ export default async function FootprintPage() {
                     <strong style={{ fontFamily: "JetBrains Mono, monospace", color: "var(--forest-900)" }}>
                       {num(s.totalKg)} kg CO₂e
                     </strong>
+                    {scanned.get(s.period) ? (
+                      <div>
+                        <span className="chip" style={{ marginTop: "6px" }}><BadgeCheck size={12} aria-hidden="true" /> Bill scanned · ••••{scanned.get(s.period)?.last4}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="chip warn" style={{ marginTop: "6px", opacity: 0.85 }}>Self-reported</span>
+                      </div>
+                    )}
                     {bonusByPeriod.get(s.period) ? (
                       <div>
                         <span className="chip" style={{ marginTop: "6px" }}>+{bonusByPeriod.get(s.period)} pts bill savings bonus</span>

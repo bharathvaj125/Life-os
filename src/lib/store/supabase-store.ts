@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Challenge, Completion, Membership, Snapshot, User, Vendor } from "@/types";
+import type { BillProof, Challenge, Completion, Membership, Snapshot, User, Vendor } from "@/types";
 import type { Repository } from "./repository";
 
 /**
@@ -41,6 +41,9 @@ const toChallenge = (r: Row): Challenge => ({ id: r.id as string, title: r.title
 
 const toVendor = (r: Row): Vendor => ({ id: r.id as string, name: r.name as string, city: r.city as string, pincode: r.pincode as string, services: r.services as Vendor["services"], phone: (r.phone as string | null) ?? undefined, website: (r.website as string | null) ?? undefined, empanelmentClaim: (r.empanelment_claim as string | null) ?? undefined, status: r.status as Vendor["status"], isSample: r.is_sample as boolean, ownerUserId: (r.owner_user_id as string | null) ?? undefined, createdAt: r.created_at as string });
 const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pincode: v.pincode, services: v.services, phone: v.phone ?? null, website: v.website ?? null, empanelment_claim: v.empanelmentClaim ?? null, status: v.status, is_sample: v.isSample, owner_user_id: v.ownerUserId ?? null, created_at: v.createdAt });
+
+const toProof = (r: Row): BillProof => ({ id: r.id as string, userId: r.user_id as string, period: r.period as string, consumerHash: r.consumer_hash as string, consumerLast4: r.consumer_last4 as string, previousReading: Number(r.previous_reading), currentReading: Number(r.current_reading), multiplier: Number(r.multiplier), units: Number(r.units), amountInr: r.amount_inr == null ? undefined : Number(r.amount_inr), source: r.source as BillProof["source"], createdAt: r.created_at as string });
+const fromProof = (p: BillProof) => ({ id: p.id, user_id: p.userId, period: p.period, consumer_hash: p.consumerHash, consumer_last4: p.consumerLast4, previous_reading: p.previousReading, current_reading: p.currentReading, multiplier: p.multiplier, units: p.units, amount_inr: p.amountInr ?? null, source: p.source, created_at: p.createdAt });
 
 export function supabaseStore(): Repository {
   return {
@@ -116,6 +119,21 @@ export function supabaseStore(): Repository {
     },
     async listMemberships() {
       return (await fetchAll("challenge_members")).map((r): Membership => ({ challengeId: r.challenge_id as string, userId: r.user_id as string, joinedAt: r.joined_at as string }));
+    },
+
+    async upsertBillProof(proof) {
+      const { error } = await db().from("bill_proofs").upsert(fromProof(proof), { onConflict: "user_id,period" });
+      if (!error) return { ok: true as const };
+      if (error.code === "23505") return { ok: false as const, reason: "duplicate" as const };
+      throw error;
+    },
+    async listBillProofs(userId) {
+      return (await fetchAll("bill_proofs", userId ? ["user_id", userId] : undefined)).map(toProof);
+    },
+    async findBillProof(consumerHash, period) {
+      const { data, error } = await db().from("bill_proofs").select("*").eq("consumer_hash", consumerHash).eq("period", period).maybeSingle();
+      if (error) throw error;
+      return data ? toProof(data) : null;
     },
 
     async listVendors() {

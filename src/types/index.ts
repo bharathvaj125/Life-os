@@ -143,6 +143,25 @@ export interface Vendor {
   createdAt: string;
 }
 
+/**
+ * What we keep about a scanned bill: the readings and a one-way fingerprint of the consumer number, so the
+ * same bill cannot be used twice. Never the image, the name, the address or the full consumer number.
+ */
+export interface BillProof {
+  id: string;
+  userId: string;
+  period: string;
+  consumerHash: string;
+  consumerLast4: string;
+  previousReading: number;
+  currentReading: number;
+  multiplier: number;
+  units: number;
+  amountInr?: number;
+  source: "image" | "pdf";
+  createdAt: string;
+}
+
 export interface StoreData {
   users: User[];
   snapshots: Snapshot[];
@@ -151,4 +170,5 @@ export interface StoreData {
   memberships: Membership[];
   vendors: Vendor[];
   credentials: Credentials[];
+  billProofs: BillProof[];
 }

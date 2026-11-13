@@ -20,6 +20,7 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | **Roles** | Three kinds of sign-in, each with its own screens and menu: households, solar installers and GEDA administrators. Nobody sees screens meant for another role | `/`, `/register` |
 | **Personalised to the home** | Registration asks for the home and the equipment it has (ACs, geyser, EV, rooftop solar and more). Tips, daily tasks, the footprint form and Cleanest Hour then cover only what applies | `/register`, `/profile` |
 | **Welcome screen with demo accounts** | Sign in with email and password, or open a demo household, installer or administrator in one click | `/` |
+| **Extra: bill scanner (OCR)** | Photo or PDF of an electricity bill is read on the user's device, never uploaded. The meter readings must add up to the billed units, the same bill cannot be used by two accounts, and a scanned month gets a badge | `/footprint` |
 | **Extra: bill-based savings bonus** | Units that fall 5% or more against last month earn bonus points, measured from the bills | `/footprint` |
 | **Extra: installable** | Web app manifest and service worker, so it installs on a phone like an app | all pages |
 
@@ -186,6 +187,7 @@ Row level security is enabled on every table with **no** public policy. The brow
 | Solar size | `min(roof area × usable fraction ÷ 10 m² per kWp, annual use ÷ yield)` | Shade lowers the usable fraction. Yield 1300–1600 kWh/kWp/yr gives a low–high range. |
 | Solar payback | `net cost ÷ yearly saving`, low to high | Subsidy follows PM Surya Ghar as last known and is **flagged unverified** in the UI. |
 | Solar today | `kWp × forecast radiation (kWh/m²) × 0.75` | Radiation from Open-Meteo at city level; 0.75 is a performance ratio. A planning estimate. |
+| Scanned bill check | `(present reading − previous reading) × multiplier = billed units`, within 1 unit | Proves the bill is internally consistent, not that it is genuine: only the distribution company can confirm that. OCR often misreads characters, so the parser keeps several candidates per number and picks the combination that adds up. |
 | Bill savings bonus | `(last month's kWh − this month's kWh) ÷ last month's kWh`, 5% to 50% | 30, 50 or 70 points by size of the drop, once per month. Units are entered by the household, so this is bill-based, not audited. |
 | Cleanest Hour | `kWh × factor × hourly intensity index` | The index is an **illustrative model**, not live grid data. |
 | Area totals | Latest snapshot per household, grouped by 3-digit PIN prefix | Groups under 5 households are suppressed. |
@@ -220,7 +222,7 @@ Open <http://localhost:3000>. With no Supabase variables set, data lives in `.da
 
 ### Switch to Supabase
 
-1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/) in order in the SQL editor (`init`, `vendors`, `accounts`, then `roles_equipment`).
+1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/) in order in the SQL editor (`init`, `vendors`, `accounts`, `roles_equipment`, then `bill_proofs`).
 2. Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) in `.env.local` or the host's environment settings.
 3. Restart. The footer now reads "Supabase storage". Sign in to `/admin` and press **Load demo households** if you want sample community data.
 
@@ -275,13 +277,14 @@ tests/                  unit tests
 - **Accounts are email and password.** Emails are not verified and there is no password reset, because the app does not send email. Sign-in and registration attempts are rate limited in memory, which suits one server process. Demo accounts are shared sandboxes: the demo administrator is view only, and demo households and installers cannot be edited.
 - **Vendor listings are reviewed by an administrator, not audited.** Empanelment claims are self-declared and the page tells citizens to verify them on the official lists. Sample listings are labelled as samples.
 - **Weather is a city-level forecast** for Gujarat PIN codes, not a measurement at the user's roof. The service is free and has no uptime guarantee, so pages work without it.
-- **No bill OCR, satellite roof tracing, map view or AI assistant** is implemented.
+- **The bill scanner proves consistency, not authenticity.** Readings that add up and a unique consumer number stop sloppy edits and double use, but a determined person could invent a consistent bill. Confirming with the distribution company or a smart meter is the next step. The scan runs in the browser, so the server trusts the numbers only after checking them again. Sample bills (consumer numbers starting 00000) can be scanned by any account so everyone can try the feature.
+- **No satellite roof tracing, map view or AI assistant** is implemented.
 - Demo households are sample data and are included in admin totals, flagged as demo.
 
 ## Roadmap
 
 1. Supabase Auth (verified email or phone OTP, password reset) replacing the app's own accounts, with per-user RLS policies.
-2. Bill upload with OCR and a mandatory review step before saving.
+2. Confirming scanned bills with the distribution company or smart meter data (the OCR scan and review step are built).
 3. Roof outline on a map with PVGIS yield for the chosen location.
 4. DISCOM tariff slabs and time-of-day rules from official GERC orders, with an effective-date audit trail.
 5. Hourly grid intensity from a published series to replace the illustrative Cleanest Hour curve.

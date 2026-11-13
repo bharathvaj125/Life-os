@@ -94,6 +94,10 @@ export interface Task {
   kgSaved: number;
   /** How the saving was estimated, shown to the user. */
   assumption: string;
+  /** Hours of the day (India time) when the task can be claimed. Outside them the server refuses it. */
+  window?: { fromHour: number; toHour: number };
+  /** Tasks that need a photo reviewed by an administrator before any points are awarded. */
+  proof?: "photo";
 }
 
 export interface Completion {
@@ -168,6 +172,23 @@ export interface BillProof {
   createdAt: string;
 }
 
+export type TaskProofStatus = "pending" | "approved" | "rejected";
+
+/**
+ * A photo sent as evidence for a high-impact action, waiting for an administrator. The photo is kept only until
+ * it has been reviewed and is deleted straight after, whatever the decision, so we do not hold pictures of homes.
+ */
+export interface TaskProof {
+  id: string;
+  userId: string;
+  taskId: string;
+  status: TaskProofStatus;
+  /** A small JPEG as a data URL. Null once the proof has been reviewed. */
+  image: string | null;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
 export interface StoreData {
   users: User[];
   snapshots: Snapshot[];
@@ -177,4 +198,5 @@ export interface StoreData {
   vendors: Vendor[];
   credentials: Credentials[];
   billProofs: BillProof[];
+  taskProofs: TaskProof[];
 }

@@ -1,20 +1,29 @@
 import type { Metadata } from "next";
 import { BadgeCheck, ExternalLink, MapPin, Phone, Search, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LeafletMap, type MapMarker } from "@/components/maps/leaflet-map";
 import { Card } from "@/components/ui/card";
 import { OFFICIAL_VENDOR_CHECKS, VENDOR_SERVICES, VENDOR_SERVICE_IDS, VERIFY_STEPS, serviceLabel } from "@/features/vendors/catalog";
 import { requireUser } from "@/lib/auth/session";
+import { locateByPincode } from "@/lib/maps/locate";
 import { listApprovedVendors } from "@/services/vendors";
 import type { VendorService } from "@/types";
 
 export const metadata: Metadata = { title: "Sustainable Energy Vendor Directory" };
 
 export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ service?: string; place?: string }> }) {
-  await requireUser();
+  const user = await requireUser();
   const { service: rawService, place } = await searchParams;
   const service = VENDOR_SERVICE_IDS.includes(rawService as VendorService) ? (rawService as VendorService) : undefined;
   const vendors = await listApprovedVendors({ service, place });
   const filtered = Boolean(service || place?.trim());
+  const markers: MapMarker[] = vendors.flatMap((v) => {
+    const position = locateByPincode(v.pincode, v.id);
+    if (!position) return [];
+    return [{ id: v.id, position, kind: "pin" as const, tone: v.isSample ? ("grey" as const) : ("amber" as const), title: v.name, lines: [`${v.city} · ${v.pincode}`, v.services.map(serviceLabel).join(", "), ...(v.isSample ? ["Sample listing"] : [])], link: v.website && !v.isSample ? { href: v.website, text: "Website" } : undefined }];
+  });
+  const here = locateByPincode(user.pincode, "you");
+  if (here) markers.push({ id: "you", position: here, kind: "bubble", tone: "you", radius: 9, title: "Your area", lines: [`PIN ${user.pincode}`] });
 
   return (
     <>
@@ -63,6 +72,13 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
       <p className="muted" style={{ margin: "0 0 14px" }} aria-live="polite">
         {vendors.length} {vendors.length === 1 ? "listing" : "listings"}{filtered ? " match your search" : ""}
       </p>
+
+      {markers.length > 1 ? (
+        <div style={{ margin: "0 0 20px" }}>
+          <LeafletMap markers={markers} height={340} label="Map of vendor listings" />
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: "12.5px" }}>Pins are placed around each business&apos;s city, not at a street address. Grey pins are sample listings.</p>
+        </div>
+      ) : null}
 
       {vendors.length === 0 ? (
         <Card title="No listings match yet">

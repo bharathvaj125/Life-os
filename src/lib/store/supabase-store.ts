@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { BillProof, Challenge, Completion, Membership, Snapshot, User, Vendor } from "@/types";
+import type { BillProof, Challenge, TaskProof, Completion, Membership, Snapshot, User, Vendor } from "@/types";
 import type { Repository } from "./repository";
 
 /**
@@ -44,6 +44,8 @@ const fromVendor = (v: Vendor) => ({ id: v.id, name: v.name, city: v.city, pinco
 
 const toProof = (r: Row): BillProof => ({ id: r.id as string, userId: r.user_id as string, period: r.period as string, consumerHash: r.consumer_hash as string, consumerLast4: r.consumer_last4 as string, previousReading: Number(r.previous_reading), currentReading: Number(r.current_reading), multiplier: Number(r.multiplier), units: Number(r.units), amountInr: r.amount_inr == null ? undefined : Number(r.amount_inr), source: r.source as BillProof["source"], createdAt: r.created_at as string });
 const fromProof = (p: BillProof) => ({ id: p.id, user_id: p.userId, period: p.period, consumer_hash: p.consumerHash, consumer_last4: p.consumerLast4, previous_reading: p.previousReading, current_reading: p.currentReading, multiplier: p.multiplier, units: p.units, amount_inr: p.amountInr ?? null, source: p.source, created_at: p.createdAt });
+
+const toTaskProof = (r: Row): TaskProof => ({ id: r.id as string, userId: r.user_id as string, taskId: r.task_id as string, status: r.status as TaskProof["status"], image: (r.image as string | null) ?? null, createdAt: r.created_at as string, reviewedAt: (r.reviewed_at as string | null) ?? undefined });
 
 export function supabaseStore(): Repository {
   return {
@@ -134,6 +136,26 @@ export function supabaseStore(): Repository {
       const { data, error } = await db().from("bill_proofs").select("*").eq("consumer_hash", consumerHash).eq("period", period).maybeSingle();
       if (error) throw error;
       return data ? toProof(data) : null;
+    },
+
+    async addTaskProof(proof) {
+      const { error } = await db().from("task_proofs").insert({ id: proof.id, user_id: proof.userId, task_id: proof.taskId, status: proof.status, image: proof.image, created_at: proof.createdAt });
+      if (!error) return { ok: true as const };
+      if (error.code === "23505") return { ok: false as const, reason: "exists" as const };
+      throw error;
+    },
+    async listTaskProofs(filter) {
+      let query = db().from("task_proofs").select("*");
+      if (filter?.userId) query = query.eq("user_id", filter.userId);
+      if (filter?.status) query = query.eq("status", filter.status);
+      const { data, error } = await query.order("created_at", { ascending: true }).limit(1000);
+      if (error) throw error;
+      return data.map(toTaskProof);
+    },
+    async reviewTaskProof(id, status, reviewedAt) {
+      const { data, error } = await db().from("task_proofs").update({ status, reviewed_at: reviewedAt, image: null }).eq("id", id).select("*").maybeSingle();
+      if (error) throw error;
+      return data ? toTaskProof(data) : null;
     },
 
     async listVendors() {

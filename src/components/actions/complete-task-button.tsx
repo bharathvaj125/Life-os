@@ -10,10 +10,13 @@ export function CompleteTaskButton({
   taskId,
   done,
   points,
+  blockedReason = null,
 }: {
   taskId: string;
   done: boolean;
   points: number;
+  /** Why the task cannot be claimed right now. The server enforces the same rule. */
+  blockedReason?: string | null;
 }) {
   const { pending, error, run, router } = useAction();
   const [justCompleted, setJustCompleted] = useState(false);
@@ -41,7 +44,7 @@ export function CompleteTaskButton({
     <div style={{ marginTop: "14px" }}>
       <Button
         type="button"
-        disabled={pending}
+        disabled={pending || Boolean(blockedReason)}
         onClick={handleComplete}
         className="button-surya"
         style={{ width: "100%", fontSize: "14px", padding: "10px 16px" }}
@@ -54,6 +57,9 @@ export function CompleteTaskButton({
           </span>
         )}
       </Button>
+      {blockedReason ? (
+        <p className="muted" style={{ margin: "8px 0 0", fontSize: "12.5px" }}>{blockedReason}</p>
+      ) : null}
       {error ? (
         <p role="alert" className="form-error" style={{ marginTop: "8px", fontSize: "12px" }}>
           {error}

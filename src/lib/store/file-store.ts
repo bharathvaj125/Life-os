@@ -24,6 +24,7 @@ function load(): Promise<StoreData> {
       data.vendors ??= buildSeed(new Date()).vendors;
       data.credentials ??= [];
       data.billProofs ??= [];
+      data.taskProofs ??= [];
       for (const u of data.users) u.role ??= "citizen";
       return data;
     } catch {
@@ -134,6 +135,25 @@ export const fileStore: Repository = {
   },
   async findBillProof(consumerHash, period) {
     return (await load()).billProofs.find((p) => p.consumerHash === consumerHash && p.period === period) ?? null;
+  },
+
+  async addTaskProof(proof) {
+    return mutate((d) => {
+      if (d.taskProofs.some((p) => p.userId === proof.userId && p.taskId === proof.taskId && p.status !== "rejected")) return { ok: false as const, reason: "exists" as const };
+      d.taskProofs.push(proof);
+      return { ok: true as const };
+    });
+  },
+  async listTaskProofs(filter) {
+    return (await load()).taskProofs.filter((p) => (!filter?.userId || p.userId === filter.userId) && (!filter?.status || p.status === filter.status));
+  },
+  async reviewTaskProof(id, status, reviewedAt) {
+    return mutate((d) => {
+      const proof = d.taskProofs.find((p) => p.id === id);
+      if (!proof) return null;
+      Object.assign(proof, { status, reviewedAt, image: null });
+      return proof;
+    });
   },
 
   async listVendors() {

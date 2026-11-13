@@ -4,6 +4,7 @@ import { NudgeList } from "@/components/actions/nudge-list";
 import { LiveWeatherNudges } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
 import { ProgressBar, Stat } from "@/components/ui/field";
+import { formatHour } from "@/features/gamification/tasks";
 import { requireUser } from "@/lib/auth/session";
 import { num } from "@/lib/format";
 import { getActionsView } from "@/services/actions";
@@ -114,12 +115,13 @@ export default async function ActionsPage() {
               <div className="badge-row">
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>
+                {t.window ? <span className="chip">{formatHour(t.window.fromHour)} to {formatHour(t.window.toHour)}</span> : null}
               </div>
               <p style={{ minHeight: "44px" }}>{t.description}</p>
               <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
                 <strong>Impact Model:</strong> {t.assumption}
               </p>
-              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} />
+              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} blockedReason={t.blockedReason} />
             </Card>
           ))}
         </div>
@@ -135,12 +137,13 @@ export default async function ActionsPage() {
               <div className="badge-row">
                 <span className="chip">{CADENCE[t.cadence]}</span>
                 <span className="chip surya">+{t.points} pts</span>
+                {t.window ? <span className="chip">{formatHour(t.window.fromHour)} to {formatHour(t.window.toHour)}</span> : null}
               </div>
               <p style={{ minHeight: "44px" }}>{t.description}</p>
               <p className="muted" style={{ fontSize: "12.5px", marginTop: "8px" }}>
                 <strong>Impact Model:</strong> {t.assumption}
               </p>
-              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} />
+              <CompleteTaskButton taskId={t.id} done={t.doneInWindow} points={t.points} blockedReason={t.blockedReason} />
             </Card>
           ))}
         </div>

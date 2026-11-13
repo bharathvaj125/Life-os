@@ -13,8 +13,8 @@ export const TASKS: Task[] = [
   { id: "join-challenge", title: "Join a community challenge", description: "Pick a goal on the Community page.", category: "community", cadence: "once", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Participation only, no saving claimed." },
   { id: "solar-estimate", title: "Check what rooftop solar could do for you", description: "Run the estimate on the Resources page.", category: "community", cadence: "once", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Learning step, no saving claimed." },
   { id: "ev-night-charge", title: "Charge your EV outside 6–10 PM", description: "Plug in after 10 PM or before 6 PM this week.", category: "mobility", cadence: "weekly", points: 20, kwhSaved: 0, kgSaved: 0, assumption: "Moves load off the evening peak but does not cut units, so no saving is claimed." },
-  { id: "pump-midday", title: "Run the water pump at midday", description: "Fill the tank between 10 AM and 3 PM instead of the evening.", category: "energy", cadence: "daily", points: 10, kwhSaved: 0, kgSaved: 0, assumption: "Eases the evening peak and suits solar hours. No unit saving is claimed." },
-  { id: "solar-selfuse", title: "Use your own solar power", description: "Run the washing machine or other heavy loads between 10 AM and 3 PM.", category: "energy", cadence: "daily", points: 15, kwhSaved: 0, kgSaved: 0, assumption: "Uses your own generation directly. No saving is claimed beyond what your meter shows." },
+  { id: "pump-midday", title: "Run the water pump at midday", description: "Fill the tank between 10 AM and 3 PM instead of the evening.", category: "energy", cadence: "daily", points: 10, kwhSaved: 0, kgSaved: 0, assumption: "Eases the evening peak and suits solar hours. No unit saving is claimed.", window: { fromHour: 10, toHour: 15 } },
+  { id: "solar-selfuse", title: "Use your own solar power", description: "Run the washing machine or other heavy loads between 10 AM and 3 PM.", category: "energy", cadence: "daily", points: 15, kwhSaved: 0, kgSaved: 0, assumption: "Uses your own generation directly. No saving is claimed beyond what your meter shows.", window: { fromHour: 10, toHour: 15 } },
 ];
 
 export const getTask = (id: string) => TASKS.find((t) => t.id === id);
@@ -45,3 +45,30 @@ export function taskApplies(task: Task, equipment: Equipment | undefined, roof?:
 }
 
 export const tasksFor = (equipment: Equipment | undefined, roof?: RoofAccess): Task[] => TASKS.filter((t) => taskApplies(t, equipment, roof));
+
+/** The AC setpoint task only makes sense on a day warm enough to run an AC. */
+export const AC_TASK_MIN_MAX_C = 28;
+
+export interface TaskContext {
+  /** Hour of the day in India time, 0 to 23. */
+  hour: number;
+  /** Today's forecast high in the household's city. Unknown (null) never blocks anything. */
+  maxC?: number | null;
+}
+
+export const formatHour = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 || h === 24 ? "AM" : "PM"}`;
+
+/**
+ * Why a task cannot be claimed right now, or null when it can. These rules are the server's, so a task button
+ * that is switched off in the browser cannot be bypassed by calling the API directly. When the weather is
+ * unknown the weather rule steps aside rather than blocking people for a reason we cannot check.
+ */
+export function taskBlockReason(task: Task, { hour, maxC }: TaskContext): string | null {
+  if (task.window && !(hour >= task.window.fromHour && hour < task.window.toHour)) {
+    return `You can only claim this between ${formatHour(task.window.fromHour)} and ${formatHour(task.window.toHour)} (India time).`;
+  }
+  if (task.id === "ac-setpoint" && maxC != null && maxC < AC_TASK_MIN_MAX_C) {
+    return `Today's high is only ${Math.round(maxC)} °C, so an AC setpoint task is not needed today.`;
+  }
+  return null;
+}

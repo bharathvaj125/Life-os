@@ -1,4 +1,4 @@
-import type { BillProof, Challenge, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
+import type { BillProof, Challenge, TaskProof, TaskProofStatus, Completion, Credentials, Membership, Snapshot, User, Vendor, VendorStatus } from "@/types";
 
 /**
  * Persistence boundary. Services depend only on this interface, so the local JSON store used for
@@ -31,6 +31,12 @@ export interface Repository {
   listBillProofs(userId?: string): Promise<BillProof[]>;
   /** The proof for this consumer number fingerprint and month, whoever owns it. */
   findBillProof(consumerHash: string, period: string): Promise<BillProof | null>;
+
+  /** Fails with "exists" when the user already has a pending or approved proof for that task. */
+  addTaskProof(proof: TaskProof): Promise<{ ok: true } | { ok: false; reason: "exists" }>;
+  listTaskProofs(filter?: { userId?: string; status?: TaskProofStatus }): Promise<TaskProof[]>;
+  /** Records the decision and deletes the photo. Returns null when the id does not exist. */
+  reviewTaskProof(id: string, status: Exclude<TaskProofStatus, "pending">, reviewedAt: string): Promise<TaskProof | null>;
 
   listVendors(): Promise<Vendor[]>;
   addVendor(vendor: Vendor): Promise<Vendor>;

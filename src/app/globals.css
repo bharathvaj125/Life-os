@@ -1762,3 +1762,44 @@ tr.you td {
     font-size: 21px;
   }
 }
+
+/* Maps */
+.map-frame {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--sand-200);
+  background: var(--sand-100);
+  position: relative;
+  z-index: 0;
+}
+
+.map-pin span {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Darken the street tiles in the dark theme so the map does not glare. */
+:root[data-theme="dark"] .map-frame .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.95) saturate(0.7);
+}
+
+.map-frame .leaflet-popup-content-wrapper {
+  background: var(--card-bg);
+  color: var(--foreground);
+  border-radius: 12px;
+}
+
+.map-frame .leaflet-popup-tip {
+  background: var(--card-bg);
+}
+
+.map-frame .leaflet-popup-content a {
+  color: var(--surya-700);
+  font-weight: 700;
+}

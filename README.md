@@ -184,7 +184,7 @@ Row level security is enabled on every table with **no** public policy. The brow
 
 ## Tech stack
 
-Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · Recharts · zod · Supabase (PostgreSQL) · Vitest.
+Next.js 15 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS 4 · Recharts · zod · Supabase (PostgreSQL) · Vitest.
 
 ## Run it locally
 

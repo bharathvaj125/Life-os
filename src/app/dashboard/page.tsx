@@ -129,7 +129,7 @@ export default async function DashboardPage() {
             label="Daily points used"
           />
           <p className="muted" style={{ fontSize: "13.5px" }}>
-            Points prevent spam: each micro-action is limited by its cadence (daily, weekly, or one-time) and capped to 30 points per day to keep leaderboards fair.
+            Points prevent spam: each micro-action is limited by its cadence (daily, weekly, or one-time) and capped to {progress.dailyLimit} points per day to keep leaderboards fair.
           </p>
           <div style={{ marginTop: "20px" }}>
             <Link className="button button-surya" href="/actions" style={{ width: "100%" }}>

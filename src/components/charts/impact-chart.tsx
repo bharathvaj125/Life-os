@@ -76,7 +76,7 @@ export function ImpactChart({ data }: { data: ImpactPoint[] }) {
       style={{ width: "100%", height: 280, marginTop: "8px" }}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="impactGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--forest-700)" stopOpacity={0.28} />
@@ -97,6 +97,7 @@ export function ImpactChart({ data }: { data: ImpactPoint[] }) {
             tickLine={false}
             axisLine={false}
             unit=" kg"
+            width={64}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area

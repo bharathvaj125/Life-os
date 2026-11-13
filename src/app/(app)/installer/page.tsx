@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, Clock, EyeOff, ExternalLink, MapPin, ShieldAlert, Store } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Clock, MapPin, ShieldAlert, ShieldCheck, Store, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Stat } from "@/components/ui/field";
-import { OFFICIAL_VENDOR_CHECKS, serviceLabel } from "@/features/vendors/catalog";
+import { serviceLabel } from "@/features/vendors/catalog";
 import { requireViewer } from "@/lib/auth/viewer";
 import { istHour } from "@/lib/dates";
 import { getDemand, getListing } from "@/services/installer";
@@ -67,36 +67,23 @@ export default async function InstallerPage() {
         </div>
       </section>
 
-      <h2 className="section-title" style={{ margin: "8px 0 4px" }}>Demand around {demand.areaLabel}</h2>
-      {demand.visible ? (
-        <>
-          <section className="stats" aria-label="Local demand">
-            <Stat label="Households using LiFE-OS" value={demand.households} note={`In ${demand.areaLabel}`} />
-            <Stat label="Worth a conversation" value={demand.solarFit} note="Use 250 kWh or more, can use a roof, no solar yet" tone="good" />
-            <Stat label="Average monthly use" value={`${demand.avgKwh} kWh`} note="Latest bill of each household" />
-          </section>
-          <p className="muted" style={{ fontSize: "13px" }}>Area totals only. Individual households are never listed or contacted through this page.</p>
-        </>
-      ) : (
-        <Card title="Not enough households yet" icon={<EyeOff size={20} className="card-icon" style={{ margin: 0 }} />}>
-          <p style={{ margin: 0 }}>
-            Fewer than five households in {demand.areaLabel} use LiFE-OS so far. To protect their privacy, numbers appear once at least five do.
-          </p>
-        </Card>
-      )}
+      <h2 className="section-title" style={{ margin: "8px 0 4px" }}>At a glance</h2>
+      <section className="stats" aria-label="Summary">
+        <Stat label="Listing" value={status ? status.label : "None yet"} note={listing ? listing.name : "Create one to be found"} />
+        <Stat label={`Households in ${demand.areaLabel}`} value={demand.visible ? demand.households : "Hidden"} note={demand.visible ? "Using LiFE-OS" : "Shown once five or more join"} />
+        <Stat label="Worth a conversation" value={demand.visible ? demand.solarFit : "Hidden"} tone={demand.visible ? "good" : undefined} note="High use, a usable roof, no solar yet" />
+      </section>
 
-      <Card title="Be easy to trust" icon={<ShieldAlert size={20} className="card-icon surya" style={{ margin: 0 }} />}>
-        <p style={{ marginTop: 0 }}>
-          For the central subsidy, citizens must use an empanelled installer. Make sure you are on the official lists, and quote your registration ID in your listing.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-          {OFFICIAL_VENDOR_CHECKS.map((c) => (
-            <a key={c.url} className="chip" href={c.url} target="_blank" rel="noopener noreferrer" title={c.note}>
-              {c.title} <ExternalLink size={12} aria-hidden="true" />
-            </a>
-          ))}
-        </div>
-      </Card>
+      <div className="split">
+        <Card title="See local demand" icon={<TrendingUp size={20} className="card-icon" style={{ margin: 0 }} />}>
+          <p style={{ marginTop: 0 }}>How many households around you could use rooftop solar, as area totals only.</p>
+          <Link className="button button-outline" href="/installer/demand">Open demand <ArrowUpRight size={16} aria-hidden="true" /></Link>
+        </Card>
+        <Card title="Be easy to trust" icon={<ShieldCheck size={20} className="card-icon surya" style={{ margin: 0 }} />}>
+          <p style={{ marginTop: 0 }}>A checklist for your listing and the official lists citizens will check you against.</p>
+          <Link className="button button-outline" href="/installer/trust">Get verified <ArrowUpRight size={16} aria-hidden="true" /></Link>
+        </Card>
+      </div>
     </>
   );
 }

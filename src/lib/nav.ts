@@ -24,11 +24,16 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   installer: [
     { href: "/installer", label: "Overview", icon: "LayoutDashboard" },
+    { href: "/installer/demand", label: "Demand", icon: "TrendingUp" },
     { href: "/installer/listing", label: "My listing", icon: "Store" },
+    { href: "/installer/trust", label: "Get verified", icon: "ShieldCheck" },
   ],
   admin: [
     { href: "/admin", label: "Overview", icon: "LayoutDashboard" },
+    { href: "/admin/areas", label: "Areas", icon: "MapPin" },
+    { href: "/admin/challenges", label: "Challenges", icon: "Trophy" },
     { href: "/admin/vendors", label: "Vendors", icon: "Store" },
+    { href: "/admin/proofs", label: "Photos", icon: "Camera" },
   ],
 };
 

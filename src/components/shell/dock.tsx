@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, House, LayoutDashboard, Leaf, ListChecks, Store, Sun, Users, type LucideIcon } from "lucide-react";
+import { Camera, Clock, House, LayoutDashboard, Leaf, ListChecks, MapPin, ShieldCheck, Store, Sun, TrendingUp, Trophy, Users, type LucideIcon } from "lucide-react";
 import type { NavItem } from "@/lib/nav";
 
-const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Leaf, ListChecks, Clock, Users, Sun, Store, House };
+const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Leaf, ListChecks, Clock, Users, Sun, Store, House, Camera, MapPin, ShieldCheck, TrendingUp, Trophy };
 
 /** The floating menu at the bottom of every signed-in screen. The page you are on is highlighted. */
 export function Dock({ items }: { items: NavItem[] }) {

@@ -22,7 +22,7 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | **Animated emblem** | The LiFE-OS emblem (leaf, solar home, turbine, sun, plug) is one SVG drawing: the sun follows India time, the turbine turns, the panel catches light. Motion respects reduced-motion settings | all pages |
 | **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
 | **Extra: live weather** | Today's forecast (Open-Meteo, no key) drives the AC and drying nudges and the solar insight | `/dashboard`, `/actions`, `/resources` |
-| **Roles** | Three kinds of sign-in, each with its own screens and menu: households, solar installers and GEDA administrators. Nobody sees screens meant for another role | `/`, `/register` |
+| **Roles** | Three kinds of sign-in, each with its own screens and menu: households (8 screens), solar installers (overview, local demand, listing, get verified) and GEDA administrators (overview, areas, challenges, vendor review, photo review). Nobody sees screens meant for another role | `/`, `/register` |
 | **Personalised to the home** | Registration asks for the home and the equipment it has (ACs, geyser, EV, rooftop solar and more). Tips, daily tasks, the footprint form and Cleanest Hour then cover only what applies | `/register`, `/profile` |
 | **Welcome screen with demo accounts** | Sign in with email and password, or open a demo household, installer or administrator in one click | `/` |
 | **District leaderboards and trust tiers** | Leaderboards filter by area, any Gujarat district or statewide, and show how each result is backed: bill-scanned or self-reported (smart-meter confirmation is planned and shown as such) | `/community` |

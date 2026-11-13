@@ -974,7 +974,7 @@ tr.you td {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--card-bg) 95%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--sand-200);
@@ -1870,13 +1870,13 @@ tr.you td {
 @keyframes sun-pulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
 .sunarc-sun { animation: sun-pulse 3.2s ease-in-out infinite; }
 
-.ring { position: relative; flex: none; }
-.ring-track { fill: none; stroke: var(--sand-200); }
-.ring-fill { fill: none; stroke: var(--surya-600); stroke-linecap: round; animation: ring-draw 900ms cubic-bezier(.2,.7,.2,1) both; }
-@keyframes ring-draw { from { stroke-dashoffset: var(--ring-c); } }
-.ring-centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
-.ring-centre b { font-family: 'JetBrains Mono', monospace; font-size: 26px; color: var(--forest-900); letter-spacing: -0.03em; }
-.ring-centre span { font-size: 11.5px; color: var(--muted-text); }
+.donut { position: relative; flex: none; }
+.donut-track { fill: none; stroke: var(--sand-200); }
+.donut-fill { fill: none; stroke: var(--surya-600); stroke-linecap: round; animation: donut-draw 900ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes donut-draw { from { stroke-dashoffset: var(--ring-c); } }
+.donut-centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
+.donut-centre b { font-family: 'JetBrains Mono', monospace; font-size: 26px; color: var(--forest-900); letter-spacing: -0.03em; }
+.donut-centre span { font-size: 11.5px; color: var(--muted-text); }
 
 .quota-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .quota-row p { margin: 0; }
@@ -1898,7 +1898,7 @@ tr.you td {
   .sunarc-card { padding: 4px 16px 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sunarc-sun, .ring-fill, .burst-rays i, .burst-points { animation: none; }
+  .sunarc-sun, .donut-fill, .burst-rays i, .burst-points { animation: none; }
   .burst-points { opacity: 1; }
 }
 
@@ -1976,7 +1976,7 @@ tr.you td {
 .whatif-controls { display: grid; gap: 22px; }
 .whatif-row label { display: block; font-size: 14.5px; font-weight: 600; margin-bottom: 10px; color: var(--forest-900); }
 .whatif-row label b { color: var(--surya-700); font-family: 'JetBrains Mono', monospace; }
-.whatif input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; margin: 8px 0; border-radius: 99px; cursor: pointer; background: linear-gradient(90deg, var(--surya-500) var(--fill, 0%), var(--sand-200) var(--fill, 0%)); }
+.whatif input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; min-height: 0; padding: 0; border: 0; margin: 10px 0; border-radius: 99px; cursor: pointer; background: linear-gradient(90deg, var(--surya-500) var(--fill, 0%), var(--sand-200) var(--fill, 0%)); }
 .whatif input[type="range"]:focus-visible { outline: 2.5px solid var(--surya-600); outline-offset: 6px; }
 .whatif input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #FFC266; border: 3px solid var(--surya-600); box-shadow: 0 3px 10px rgba(217, 119, 36, 0.4); transition: transform 0.15s ease; }
 .whatif input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #FFC266; border: 3px solid var(--surya-600); box-shadow: 0 3px 10px rgba(217, 119, 36, 0.4); }

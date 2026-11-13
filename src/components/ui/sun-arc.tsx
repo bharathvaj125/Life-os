@@ -20,11 +20,11 @@ function band(from: number, to: number): string {
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
-const TICKS = [
-  { hour: 6, label: "6 AM" },
-  { hour: 12, label: "12 PM" },
-  { hour: 18, label: "6 PM" },
-  { hour: 22, label: "10 PM" },
+const TICKS: { hour: number; label: string; anchor: "start" | "middle" | "end" }[] = [
+  { hour: 6, label: "6 AM", anchor: "end" },
+  { hour: 12, label: "12 PM", anchor: "middle" },
+  { hour: 18, label: "6 PM", anchor: "start" },
+  { hour: 22, label: "10 PM", anchor: "start" },
 ];
 
 type Zone = "solar" | "peak" | "everyday";
@@ -95,17 +95,17 @@ export function SunArc({ hour, maxC }: { hour: number; maxC?: number | null }) {
         </g>
 
         {TICKS.map((t) => {
-          const [x, y] = at(t.hour, R + 22);
+          const [x, y] = at(t.hour, R + 26);
           return (
-            <text key={t.hour} x={x} y={y + 4} textAnchor="middle" className="sunarc-tick">
+            <text key={t.hour} x={x} y={y + 4} textAnchor={t.anchor} className="sunarc-tick">
               {t.label}
             </text>
           );
         })}
 
         {/* inner labels for the two windows */}
-        <text x={at(12.5, R - 30)[0]} y={at(12.5, R - 30)[1]} textAnchor="middle" className="sunarc-label sunarc-label-solar">Solar hours</text>
-        <text x={at(20, R - 30)[0]} y={at(20, R - 30)[1] + 4} textAnchor="middle" className="sunarc-label sunarc-label-peak">Peak</text>
+        <text x={at(12.5, R - 46)[0]} y={at(12.5, R - 46)[1]} textAnchor="middle" className="sunarc-label sunarc-label-solar">Solar hours</text>
+        <text x={at(20, R - 46)[0] - 4} y={at(20, R - 46)[1] + 4} textAnchor="middle" className="sunarc-label sunarc-label-peak">Peak</text>
 
         {/* the sun, with slow rays, or a small grey dot after dark */}
         {night ? (

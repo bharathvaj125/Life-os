@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BrandLockup, BrandLogo } from "@/components/brand/brand-logo";
+import { BrandLockup } from "@/components/brand/brand-logo";
 import { AdminLogin } from "@/components/admin/admin-controls";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { DemoAccounts } from "@/components/welcome/demo-accounts";
@@ -21,8 +21,7 @@ export default async function WelcomePage() {
     <div className="auth-split">
       <section className="auth-left" aria-label="About LiFE-OS">
         <div className="bandhani auth-bandhani" aria-hidden="true" />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-          <BrandLogo href="/" label="LiFE-OS" size={44} />
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
           <Link href="/about" className="chip surya" style={{ padding: "7px 16px" }}>
             How it works
           </Link>

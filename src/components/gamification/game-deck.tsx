@@ -27,8 +27,8 @@ interface Props {
   dailyLimit: number;
   /** Tasks that can be claimed right now, biggest first. */
   quests: Quest[];
-  /** Where the quest chips lead. On the Actions page itself they jump to the card. */
-  questHref?: (q: Quest) => string;
+  /** Page the quest chips lead to (for example /actions). Empty keeps them on the current page. */
+  questPrefix?: string;
   compact?: boolean;
 }
 
@@ -67,7 +67,7 @@ function LevelRing({ pct, level }: { pct: number; level: number }) {
   );
 }
 
-export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit, quests, questHref, compact = false }: Props) {
+export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit, quests, questPrefix = "", compact = false }: Props) {
   const streakNow = streak.current;
   const prev = useRef({ points, level: level.level, streak: streakNow });
   const [gain, setGain] = useState<{ n: number; key: number } | null>(null);
@@ -169,7 +169,7 @@ export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit,
           <ul className="gd-quests" aria-label="Points you can claim now">
             {quests.slice(0, compact ? 3 : 5).map((q) => (
               <li key={q.id}>
-                <Link href={questHref ? questHref(q) : `#task-${q.id}`} className="gd-quest">
+                <Link href={`${questPrefix}#task-${q.id}`} className="gd-quest">
                   <span className="gd-coin" aria-hidden="true"><Gift size={13} /></span>
                   <span className="gd-quest-text">{q.title}<small>{CADENCE[q.cadence]}</small></span>
                   <b>+{q.points}</b>

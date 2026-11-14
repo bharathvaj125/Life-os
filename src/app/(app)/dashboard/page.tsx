@@ -205,7 +205,7 @@ export default async function DashboardPage() {
           pointsToday={progress.pointsToday}
           dailyLimit={progress.dailyLimit}
           quests={tasks.filter((t) => !t.doneInWindow && !t.blockedReason && t.proofStatus !== "pending").map((t) => ({ id: t.id, title: t.title, points: t.points, cadence: t.cadence })).sort((x, y) => y.points - x.points)}
-          questHref={(q) => `/actions#task-${q.id}`}
+          questPrefix="/actions"
         />
       </div>
 

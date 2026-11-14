@@ -2352,3 +2352,10 @@ html[data-intro] .splash { display: grid; }
   .gd-gain, .confetti i, .gd-toast, .gd-levelup-card, .gd-flame.bump, .gd-day.today:not(.done) b { animation: none; }
   .confetti { display: none; }
 }
+
+.plan-name-col { display: grid; gap: 6px; min-width: 0; }
+.plan-time { min-height: 38px; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 13.5px; border: 1.5px solid #3FA535; width: 100%; }
+.plan-time.unset { border-color: #E8A210; background: rgba(255, 211, 77, 0.12); }
+.plan-all { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13.5px; }
+.plan-all select { min-height: 38px; padding: 6px 10px; border-radius: 10px; }
+.plan-all em { font-style: normal; font-size: 12px; color: var(--muted-text); }

@@ -127,7 +127,7 @@ function Lane({ item, best, onStart }: { item: PlanItem; best: number | null; on
         ? segments(best).map((g, i) => <span key={`b${i}`} className="plan-ghost" style={{ left: `${(g.s / 24) * 100}%`, width: `${(g.len / 24) * 100}%` }} />)
         : null}
       {item.start === null ? (
-        <span className="plan-lane-hint">Tap the hour you usually run it</span>
+        <span className="plan-lane-hint">Choose the start time on the left, or tap here</span>
       ) : (
         segments(item.start).map((g, i) => (
           <span key={i} className="plan-block" style={{ left: `${(g.s / 24) * 100}%`, width: `${(g.len / 24) * 100}%`, background: `linear-gradient(135deg, ${tint(idx)}, ${tint(idx + 0.06)})`, boxShadow: `0 6px 18px -6px ${tint(idx, 0.7)}` }}>
@@ -243,7 +243,17 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
       </div>
 
       {/* ---- the day ---- */}
-      <p className="plan-step"><span>2</span> Tap or drag on each strip to show when you run it today.</p>
+      <p className="plan-step"><span>2</span> Choose the time you usually run each one. Pick from the list, or tap the strip.</p>
+      {items.length > 1 ? (
+        <label className="plan-all">
+          <span>Run them all at the same time?</span>
+          <select value="" onChange={(e) => e.target.value !== "" && setItems((l) => l.map((i) => ({ ...i, start: Number(e.target.value) })))} aria-label="Set one start time for every appliance">
+            <option value="">Pick one time for all</option>
+            {hours24.map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+          </select>
+          <em>You can still change any one below.</em>
+        </label>
+      ) : null}
       <div className="plan-ribbon">
         <div className="plan-row plan-head">
           <div className="plan-name"><small>Grid carbon through the day</small><em>taller means dirtier</em></div>
@@ -259,10 +269,16 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
           const p = plans[idx];
           return (
             <div key={item.uid} className="plan-row">
-              <button type="button" className="plan-name plan-name-btn" onClick={() => setOpen(open === item.uid ? null : item.uid)} aria-expanded={open === item.uid}>
-                <strong>{item.name}</strong>
-                <small>{item.kw} kW · {item.hours} h · {item.daysPerWeek}×/wk{item.start !== null ? ` · at ${hourLabel(item.start)}` : ""}</small>
-              </button>
+              <div className="plan-name-col">
+                <button type="button" className="plan-name plan-name-btn" onClick={() => setOpen(open === item.uid ? null : item.uid)} aria-expanded={open === item.uid} title="Change power, hours and days">
+                  <strong>{item.name}</strong>
+                  <small>{item.kw} kW · {item.hours} h · {item.daysPerWeek}×/wk · edit</small>
+                </button>
+                <select className={`plan-time${item.start === null ? " unset" : ""}`} value={item.start ?? ""} aria-label={`When do you run ${item.name}?`} onChange={(e) => patch(item.uid, { start: e.target.value === "" ? null : Number(e.target.value) })}>
+                  <option value="">Choose start time</option>
+                  {hours24.map((h) => <option key={h} value={h}>Starts {hourLabel(h)}</option>)}
+                </select>
+              </div>
               <div className="plan-track">
                 <Lane item={item} best={p?.best ?? null} onStart={(h) => patch(item.uid, { start: h })} />
                 {now !== null ? <i className="plan-now" style={{ left: `${(now / 24) * 100}%` }} aria-hidden="true" /> : null}

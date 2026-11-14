@@ -2,6 +2,12 @@
 
 **A zero-friction sustainability companion for Mission LiFE.** LiFE-OS turns a household's electricity bill into a carbon footprint, rupee-relevant saving suggestions, a rooftop solar estimate and shared community goals, with area-level views for GEDA administrators that never expose a single household.
 
+## Live app
+
+**<https://life-os-catalyx.onrender.com>** (hosted on Render with a Supabase database). It runs on a free plan that sleeps when idle, so the first load can take about a minute.
+
+Open the welcome screen and press a demo card to try each role without signing up: **Anika Trivedi** and **Rohan Parmar** (households), **Sunrise Solar** (installer). The administrator screens need an access code, which is kept private.
+
 Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an Interactive "Mission LiFE" Citizen Engagement Application** (Gujarat Energy Development Agency).
 
 > **Honest status.** Every feature below is implemented and runs end to end with persistent data. A few inputs are *planning assumptions* rather than audited figures (emission factors, solar subsidy, the Cleanest Hour intensity curve). They are stored in one place each, shown to the user beside every result, and listed under [Limitations](#limitations).
@@ -22,12 +28,13 @@ Built for **HackCult '26**, problem statement **HC26-GEDA01: Development of an I
 | **Animated emblem** | The LiFE-OS emblem (leaf, solar home, turbine, sun, plug) is one SVG drawing: the sun follows India time, the turbine turns, the panel catches light. Motion respects reduced-motion settings | all pages |
 | **Vendor map and quote requests** | Search by PIN code or place, or use your location; results are sorted by distance. Real public bodies (the four electricity companies, GEDA) and companies are listed with a source link. Registered installers can take a quote request and reply in a private conversation; an administrator records when an installer was found on an official list, and citizens see that badge with the date | `/vendors`, `/quotes`, `/installer/requests`, `/admin/vendors` |
 | **Roof measuring** | Find your house on satellite imagery (Esri), click the roof corners, and the area fills the solar estimate. It is an outline the person draws, not automatic detection | `/resources` |
-| **Extra: Cleanest Hour** | Move appliances across a 24-hour clock and compare modelled emissions | `/schedule` |
+| **Extra: Cleanest Hour day planner** | The household picks the appliances it really runs (nothing is pre-filled), sets start, end, hours and days a week, and places each on a 24-hour ribbon of the grid's modelled carbon. It shows per-appliance cost at an editable Gujarat slab tariff, and daily, monthly and yearly CO2 saved by moving to the cleanest slot. Rupee savings appear only if the meter has time-of-day rates, because an ordinary Gujarat home meter bills every hour the same | `/schedule` |
+| **Game deck** | Rank ring that fills to the next level, a streak flame with a seven-day strip and 3, 7, 14 and 30-day badges, today's points against a goal of 80 (a goal, not a limit), and a list of claimable tasks. Claiming plays confetti, a floating +points and a rank-up screen; all of it stops under reduced motion | `/actions`, `/dashboard` |
 | **Extra: live weather** | Today's forecast (Open-Meteo, no key) drives the AC and drying nudges and the solar insight | `/dashboard`, `/actions`, `/resources` |
 | **Roles** | Three kinds of sign-in, each with its own screens and menu: households (8 screens), solar installers (overview, local demand, listing, get verified) and GEDA administrators (overview, areas, challenges, vendor review, photo review). Nobody sees screens meant for another role | `/`, `/register` |
 | **Personalised to the home** | Registration asks for the home and the equipment it has (ACs, geyser, EV, rooftop solar and more). Tips, daily tasks, the footprint form and Cleanest Hour then cover only what applies | `/register`, `/profile` |
 | **Welcome screen with demo accounts** | Sign in with email and password, or open a demo household, installer or administrator in one click | `/` |
-| **District leaderboards and trust tiers** | Leaderboards filter by area, any Gujarat district or statewide, and show how each result is backed: bill-scanned or self-reported (smart-meter confirmation is planned and shown as such) | `/community` |
+| **Evidence-weighted leaderboards** | A ranking score counts approved photos, things the app saw happen and scanned bills in full, and unchecked tick-box habits for a quarter (a half once the bill is scanned). A district board ranks districts by average score per household, and needs three opted-in households before a district is ranked. A people board filters by area, district or statewide and shows each result's backed and self-reported points. Smart-meter confirmation is planned and shown as such | `/community` |
 | **Guidance** | A short guided tour, plain-language tooltips for terms like kWh and kWp, and rough everyday comparisons for avoided emissions | all pages |
 | **Extra: bill scanner (OCR)** | Photo or PDF of an electricity bill is read on the user's device, never uploaded. The meter readings must add up to the billed units, the same bill cannot be used by two accounts, and a scanned month gets a badge | `/footprint` |
 | **Extra: bill-based savings bonus** | Units that fall 5% or more against last month earn bonus points, measured from the bills | `/footprint` |
@@ -83,7 +90,7 @@ flowchart LR
   subgraph Browser
     UI["Next.js App Router pages<br/>React + Tailwind + Recharts"]
   end
-  subgraph Server["Next.js server (Vercel)"]
+  subgraph Server["Next.js server (Render)"]
     API["Route handlers /api/v1/*<br/>zod validation, JSON-only writes"]
     SVC["Services<br/>profile, footprint, actions, community, admin"]
     DOM["Pure domain logic<br/>lib/calculations: footprint, nudges,<br/>gamification, solar, schedule, aggregate"]

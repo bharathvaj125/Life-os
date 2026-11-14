@@ -6,6 +6,7 @@ import { istDate } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { ApiError } from "@/lib/api";
 import { completeTask } from "./actions";
+import { rankDistricts, rankingScore, type DistrictScore } from "@/lib/calculations/ranking";
 import { photoVerifiedUserIds } from "./proofs";
 
 /** The first three sample households of each area stand in for bill-scanned ones. The tier is not stored for them in the database. */
@@ -16,7 +17,14 @@ export interface LeaderRow {
   displayName: string;
   region: string;
   pincodePrefix: string;
+  /** The ranking score: claimed points weighed by how well each is backed by evidence. */
   points: number;
+  /** Points the household claimed, before weighting. */
+  claimed: number;
+  /** Claimed points fully backed by evidence (approved photos, things the app saw, scanned bills). */
+  verifiedPoints: number;
+  /** Claimed points nobody could check, counted at a lower weight. */
+  selfPoints: number;
   level: string;
   isYou: boolean;
   isDemo: boolean;
@@ -38,8 +46,12 @@ export async function getCommunityView(user: User, now: Date = new Date()) {
     .filter((c) => c.endsOn >= today && (c.regionPrefix === null || c.regionPrefix === prefix))
     .map((c) => ({ ...c, progress: challengeProgress(c, memberships, completions), joined: joined.has(c.id) }));
 
-  const points = new Map<string, number>();
-  for (const c of completions) points.set(c.userId, (points.get(c.userId) ?? 0) + c.points);
+  const claimedBy = new Map<string, number>();
+  const byUser = new Map<string, { taskId: string; points: number }[]>();
+  for (const c of completions) {
+    claimedBy.set(c.userId, (claimedBy.get(c.userId) ?? 0) + c.points);
+    byUser.set(c.userId, [...(byUser.get(c.userId) ?? []), { taskId: c.taskId, points: c.points }]);
+  }
 
   // A household is "bill-scanned" when a scanned bill still matches the units saved for that month. Nobody is
   // "smart meter" yet: that tier is planned. Sample households carry a tier of their own so the board has examples.
@@ -47,19 +59,25 @@ export async function getCommunityView(user: User, now: Date = new Date()) {
   const scanned = new Set(proofs.filter((p) => Math.abs((kwhByMonth.get(`${p.userId}:${p.period}`) ?? -1) - p.units) < 0.5).map((p) => p.userId));
   const tierOf = (u: User): "self_reported" | "bill_verified" | "smart_meter" => (scanned.has(u.id) ? "bill_verified" : u.verificationTier ?? (sampleBillScanned.test(u.id) ? "bill_verified" : "self_reported"));
 
+  // What people claim is weighed by how well it is backed, so a household with photos and a scanned bill outranks one that only ticks boxes.
+  const scoreOf = (u: User) => rankingScore(byUser.get(u.id) ?? [], tierOf(u) !== "self_reported");
+
   // Only people who opted in appear, plus you, so you can always see your own standing.
   const board = (scope: (u: User) => boolean): LeaderRow[] =>
     users
       .filter((u) => (u.leaderboardOptIn || u.id === user.id) && scope(u))
-      .map((u) => ({ u, p: points.get(u.id) ?? 0 }))
-      .sort((a, b) => b.p - a.p || a.u.displayName.localeCompare(b.u.displayName))
-      .map(({ u, p }, i) => ({
+      .map((u) => ({ u, r: scoreOf(u) }))
+      .sort((a, b) => b.r.score - a.r.score || b.r.verified - a.r.verified || a.u.displayName.localeCompare(b.u.displayName))
+      .map(({ u, r }, i) => ({
         rank: i + 1,
         displayName: u.displayName,
         region: regionLabel(regionOf(u.pincode)),
         pincodePrefix: regionOf(u.pincode),
-        points: p,
-        level: levelFor(p).name,
+        points: r.score,
+        claimed: r.claimed,
+        verifiedPoints: r.verified,
+        selfPoints: r.selfReported,
+        level: levelFor(claimedBy.get(u.id) ?? 0).name,
         isYou: u.id === user.id,
         isDemo: u.isDemo,
         verificationTier: tierOf(u),
@@ -75,7 +93,13 @@ export async function getCommunityView(user: User, now: Date = new Date()) {
   const statewideRows = board(() => true);
   const localRows = board((u) => regionOf(u.pincode) === prefix);
 
+  // Districts are ranked on opted-in households only, by average score so size does not decide it.
+  const districts: (DistrictScore & { name: string; isYours: boolean })[] = rankDistricts(
+    users.filter((u) => u.leaderboardOptIn).map((u) => ({ prefix: regionOf(u.pincode), ...(({ score, verified, claimed }) => ({ score, verified, claimed }))(scoreOf(u)) }))
+  ).map((d) => ({ ...d, name: regionLabel(d.prefix), isYours: d.prefix === prefix }));
+
   return {
+    districts,
     challenges: visible,
     userPrefix: prefix,
     userRegion: regionLabel(prefix),

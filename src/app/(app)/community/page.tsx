@@ -79,7 +79,7 @@ export default async function CommunityPage() {
               <TermHelp termKey="points" />
             </h2>
             <p className="muted" style={{ margin: "4px 0 0" }}>
-              Filter by your PIN ward, any Gujarat district, or statewide. Each result shows how it is backed.
+              See which district is ahead, then open any district to see its people. Evidence counts for more than promises.
             </p>
           </div>
         </div>
@@ -133,6 +133,7 @@ export default async function CommunityPage() {
 
       <LeaderboardView
         allRows={view.allRows}
+        districts={view.districts}
         userPrefix={view.userPrefix}
         userRegion={view.userRegion}
       />

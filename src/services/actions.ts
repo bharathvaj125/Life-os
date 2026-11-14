@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Completion, Task, TaskProof, TaskProofStatus, User } from "@/types";
-import { getTask, taskApplies, taskBlockReason, tasksFor } from "@/features/gamification/tasks";
+import { getTaskFor, taskApplies, taskBlockReason, tasksFor } from "@/features/gamification/tasks";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
 import { generateNudges } from "@/lib/calculations/nudges";
 import { MAX_DAILY_POINTS, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
@@ -61,7 +61,7 @@ function latestProofStatus(proofs: TaskProof[], taskId: string): TaskProofStatus
  * so it is not held back by the daily points cap.
  */
 export async function completeTask(user: User, taskId: string, now: Date = new Date(), opts: { approvedProof?: boolean } = {}): Promise<Completion> {
-  const task = getTask(taskId);
+  const task = getTaskFor(taskId, user.equipment);
   if (!task) throw new ApiError(404, "That task does not exist.");
   if (!taskApplies(task, user.equipment, user.roofAccess)) throw new ApiError(403, "That task does not apply to your home.");
   if (task.proof && !opts.approvedProof) throw new ApiError(403, "This one needs a photo. Send it from the Actions page and an administrator will check it.");

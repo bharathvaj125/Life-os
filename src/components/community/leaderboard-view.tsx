@@ -5,10 +5,14 @@ import type { LeaderRow } from "@/services/community";
 import { GUJARAT_DISTRICT_LIST, regionLabel } from "@/lib/calculations/aggregate";
 import { num } from "@/lib/format";
 import { TermHelp } from "@/components/ui/term-help";
-import { BadgeCheck, MapPin, Search, ShieldCheck } from "lucide-react";
+import { BadgeCheck, MapPin, Search, ShieldCheck, Trophy, Users } from "lucide-react";
+import { MIN_DISTRICT_HOUSEHOLDS, type DistrictScore } from "@/lib/calculations/ranking";
+
+type DistrictRow = DistrictScore & { name: string; isYours: boolean };
 
 interface LeaderboardViewProps {
   allRows: LeaderRow[];
+  districts: DistrictRow[];
   userPrefix: string;
   userRegion: string;
 }
@@ -22,7 +26,44 @@ const medalColors: Record<number, string> = {
   3: "#B45309", // Bronze
 };
 
-export function LeaderboardView({ allRows, userPrefix, userRegion }: LeaderboardViewProps) {
+/** Districts ranked against each other. The score is the average per household, so a big district cannot win just by being big. */
+function DistrictBoard({ districts, onOpen }: { districts: DistrictRow[]; onOpen: (prefix: string) => void }) {
+  const ranked = districts.filter((d) => d.rank !== null);
+  const waiting = districts.filter((d) => d.rank === null);
+  const top = Math.max(1, ...ranked.map((d) => d.avgScore));
+  if (districts.length === 0) return <p className="muted">No households have joined the leaderboard yet, so no district is ranked.</p>;
+  return (
+    <div className="district-board">
+      {ranked.length === 0 ? <p className="muted">No district has {MIN_DISTRICT_HOUSEHOLDS} opted-in households yet, so none is ranked.</p> : null}
+      <ol className="district-list">
+        {ranked.map((d) => (
+          <li key={d.prefix} className={`district-row${d.isYours ? " yours" : ""}${d.rank === 1 ? " first" : ""}`}>
+            <span className="district-rank">{d.rank === 1 ? <Trophy size={16} aria-hidden="true" /> : d.rank}</span>
+            <div className="district-main">
+              <div className="district-top">
+                <strong>{d.name}</strong>
+                {d.isYours ? <span className="chip surya" style={{ fontSize: "11px" }}>Your district</span> : null}
+                <span className="district-meta"><Users size={12} aria-hidden="true" /> {d.households} households</span>
+              </div>
+              <div className="district-bar" aria-hidden="true"><i style={{ width: `${Math.max(4, (d.avgScore / top) * 100)}%` }} /></div>
+              <span className="district-sub">{d.verifiedShare}% of claimed points are backed by evidence · {num(d.totalScore)} points in total</span>
+            </div>
+            <div className="district-score"><b>{num(d.avgScore)}</b><small>avg per household</small></div>
+            <button type="button" className="plan-link" onClick={() => onOpen(d.prefix)}>See people</button>
+          </li>
+        ))}
+      </ol>
+      {waiting.length > 0 ? (
+        <p className="muted district-wait">
+          Not ranked yet (needs {MIN_DISTRICT_HOUSEHOLDS} opted-in households): {waiting.map((d) => `${d.name} (${d.households})`).join(", ")}.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function LeaderboardView({ allRows, districts, userPrefix, userRegion }: LeaderboardViewProps) {
+  const [view, setView] = useState<"districts" | "people">("districts");
   const [scope, setScope] = useState<Scope>("local");
   const [tier, setTier] = useState<Tier>("all");
   const [search, setSearch] = useState("");
@@ -56,6 +97,18 @@ export function LeaderboardView({ allRows, userPrefix, userRegion }: Leaderboard
 
   return (
     <div style={{ background: "var(--card-bg)", border: "1.5px solid var(--sand-200)", borderRadius: "18px", padding: "24px", boxShadow: "0 4px 20px -2px rgba(11, 37, 25, 0.05)" }}>
+      <div className="lb-toggle" role="tablist" aria-label="What to rank">
+        <button type="button" role="tab" aria-selected={view === "districts"} className={view === "districts" ? "on" : ""} onClick={() => setView("districts")}><Trophy size={14} aria-hidden="true" /> Districts</button>
+        <button type="button" role="tab" aria-selected={view === "people"} className={view === "people" ? "on" : ""} onClick={() => setView("people")}><Users size={14} aria-hidden="true" /> People</button>
+      </div>
+      <p className="lb-how">
+        <strong>How the score works.</strong> Points that an administrator approved from a photo, that the app saw happen, or that come from a scanned bill count in full. Tick-box habits nobody can check count for only a quarter, or half once your bill has been scanned. So proof beats promises.
+      </p>
+
+      {view === "districts" ? (
+        <DistrictBoard districts={districts} onOpen={(prefix) => { setScope(prefix); setView("people"); }} />
+      ) : (
+      <>
       {/* Filters row */}
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
         {/* District & Region Selector */}
@@ -194,7 +247,7 @@ export function LeaderboardView({ allRows, userPrefix, userRegion }: Leaderboard
                 <th>Rank Tier</th>
                 <th style={{ textAlign: "right" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                    Points <TermHelp termKey="points" />
+                    Score <TermHelp termKey="points" />
                   </span>
                 </th>
               </tr>
@@ -268,6 +321,9 @@ export function LeaderboardView({ allRows, userPrefix, userRegion }: Leaderboard
                       <strong style={{ fontFamily: "JetBrains Mono, monospace", color: "var(--forest-900)", fontSize: "16px" }}>
                         {num(r.points)}
                       </strong>
+                      <div className="score-split" title="Backed by evidence, and self-reported (counted at a lower weight)">
+                        {num(r.verifiedPoints)} backed · {num(r.selfPoints)} self-reported
+                      </div>
                     </td>
                   </tr>
                 );
@@ -275,6 +331,8 @@ export function LeaderboardView({ allRows, userPrefix, userRegion }: Leaderboard
             </tbody>
           </table>
         </div>
+      )}
+      </>
       )}
     </div>
   );

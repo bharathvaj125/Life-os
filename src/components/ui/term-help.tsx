@@ -27,7 +27,7 @@ const GLOSSARY: Record<string, { title: string; explanation: string; practicalTi
   },
   points: {
     title: "LiFE Habit Points",
-    explanation: `Points earned by ticking daily, weekly and one-time habits. Each can be claimed once per day, week or lifetime, and habit points are capped at ${MAX_DAILY_POINTS} a day to keep leaderboards fair.`,
+    explanation: `Points earned by ticking daily, weekly and one-time habits. Each can be claimed once per day, week or lifetime, and tick-box habit points are capped at ${MAX_DAILY_POINTS} a day. Leaderboards rank by a score that counts approved photos, things the app saw and scanned bills in full, and counts unchecked habits for much less.`,
     practicalTip: "Points reflect daily effort; your actual carbon footprint is tracked from monthly utility bills.",
   },
   streak: {

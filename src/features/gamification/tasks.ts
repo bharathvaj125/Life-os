@@ -47,7 +47,30 @@ export function taskApplies(task: Task, equipment: Equipment | undefined, roof?:
   return needs(equipment, roof);
 }
 
-export const tasksFor = (equipment: Equipment | undefined, roof?: RoofAccess): Task[] => TASKS.filter((t) => taskApplies(t, equipment, roof));
+/**
+ * Words a task the way this home would say it. "Leave the car at home" means nothing to a family that only has a
+ * scooter, so the vehicle task names what they actually own, and counts the saving for that vehicle.
+ * Km avoided is 10 on a bus or metro. Per km: car 0.17 kg, petrol two-wheeler 0.05 kg, public transport 0.03 kg.
+ */
+export function personaliseTask(task: Task, equipment: Equipment | undefined): Task {
+  if (task.id !== "transit-day") return task;
+  const car = equipment?.petrolCar ?? false;
+  const bike = equipment?.petrolTwoWheeler ?? false;
+  if (car && !bike) return task;
+  if (bike && !car) {
+    return { ...task, title: "Leave the bike or scooter at home for a day", description: "Use the bus, metro, a shared ride, cycle or walk instead.", kgSaved: 0.2, assumption: "A 10 km trip by public transport instead of by a petrol two-wheeler (0.05 kg against 0.03 kg per km)." };
+  }
+  if (car && bike) return { ...task, title: "Leave your car or two-wheeler at home for a day", description: "Use the bus, metro, a shared ride, cycle or walk instead. The saving is counted for the car, your bigger vehicle." };
+  return { ...task, title: "Leave your vehicle at home for a day", description: "Use the bus, metro, a shared ride, cycle or walk instead.", kgSaved: 0.2, assumption: "A 10 km trip by public transport instead of by a petrol two-wheeler, counted at the smaller figure because we do not know your vehicle." };
+}
+
+/** The task as this home sees it, or undefined. Use this wherever a title or a saving is shown or awarded. */
+export const getTaskFor = (id: string, equipment: Equipment | undefined): Task | undefined => {
+  const t = getTask(id);
+  return t ? personaliseTask(t, equipment) : undefined;
+};
+
+export const tasksFor = (equipment: Equipment | undefined, roof?: RoofAccess): Task[] => TASKS.filter((t) => taskApplies(t, equipment, roof)).map((t) => personaliseTask(t, equipment));
 
 /** The AC setpoint task only makes sense on a day warm enough to run an AC. */
 export const AC_TASK_MIN_MAX_C = 28;

@@ -2,7 +2,7 @@ import type { Equipment, RoofAccess, Snapshot, TaskCategory } from "@/types";
 import { istDate, istHour } from "@/lib/dates";
 import { EMISSION_FACTORS } from "./emission-factors";
 import type { Weather } from "./weather";
-import { getTask, taskApplies } from "@/features/gamification/tasks";
+import { getTaskFor, taskApplies } from "@/features/gamification/tasks";
 
 export interface Nudge {
   id: string;
@@ -163,7 +163,7 @@ export function generateNudges({ householdSize, snapshots, now, weather, equipme
   }
 
   for (const n of out) {
-    const task = getTask(TASK_FOR_NUDGE[n.id] ?? "");
+    const task = getTaskFor(TASK_FOR_NUDGE[n.id] ?? "", equipment);
     if (task && taskApplies(task, equipment, roofAccess)) n.reward = { taskId: task.id, title: task.title, points: task.points };
   }
   return out.sort((a, b) => b.priority - a.priority);

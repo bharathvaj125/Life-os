@@ -203,7 +203,7 @@ export default async function DashboardPage() {
           streak={progress.streak}
           week={weekStrip(progress.completions.filter((c) => c.taskId !== BILL_SAVINGS_TASK_ID).map((c) => c.completedOn), istDate(now))}
           pointsToday={progress.pointsToday}
-          dailyLimit={progress.dailyLimit}
+          dailyGoal={progress.dailyGoal}
           quests={tasks.filter((t) => !t.doneInWindow && !t.blockedReason && t.proofStatus !== "pending").map((t) => ({ id: t.id, title: t.title, points: t.points, cadence: t.cadence })).sort((x, y) => y.points - x.points)}
           questPrefix="/actions"
         />
@@ -241,17 +241,17 @@ export default async function DashboardPage() {
 
         <Card title="Today's Action Quota" className="card-accent-surya">
           <div className="quota-row">
-            <Ring pct={(progress.pointsToday / progress.dailyLimit) * 100} label="Daily points used">
+            <Ring pct={Math.min(100, (progress.pointsToday / progress.dailyGoal) * 100)} label="Progress to today's goal">
               <b>{progress.pointsToday}</b>
-              <span>of {progress.dailyLimit}</span>
+              <span>goal {progress.dailyGoal}</span>
             </Ring>
             <div>
-              <p style={{ fontSize: "15px", fontWeight: 650, color: "var(--forest-900)" }}>{progress.pointsToday} of {progress.dailyLimit} points claimed today</p>
-              <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>{progress.dailyLimit - progress.pointsToday > 0 ? `${progress.dailyLimit - progress.pointsToday} left for today` : "Daily limit reached"}</p>
+              <p style={{ fontSize: "15px", fontWeight: 650, color: "var(--forest-900)" }}>{progress.pointsToday} points claimed today</p>
+              <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>{progress.dailyGoal - progress.pointsToday > 0 ? `${progress.dailyGoal - progress.pointsToday} to reach today's goal` : `Goal reached${progress.pointsToday > progress.dailyGoal ? `, +${progress.pointsToday - progress.dailyGoal} bonus` : ""}. No limit, keep going.`}</p>
             </div>
           </div>
           <p className="muted" style={{ fontSize: "13.5px", marginTop: "16px" }}>
-            Points prevent spam: each micro-action is limited by its cadence (daily, weekly, or one-time) and capped to {progress.dailyLimit} points per day to keep leaderboards fair.
+            Points prevent spam in two ways: each micro-action can be rewarded only once per day, week or lifetime, and unchecked tick-boxes count for much less on the leaderboards than photos and scanned bills. There is no daily limit.
           </p>
           <div style={{ marginTop: "20px" }}>
             <Link className="button button-surya" href="/actions" style={{ width: "100%" }}>

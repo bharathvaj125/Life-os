@@ -55,7 +55,7 @@ export default async function ActionsPage() {
         streak={progress.streak}
         week={weekStrip(progress.completions.filter((c) => c.taskId !== BILL_SAVINGS_TASK_ID).map((c) => c.completedOn), istDate())}
         pointsToday={progress.pointsToday}
-        dailyLimit={progress.dailyLimit}
+        dailyGoal={progress.dailyGoal}
         quests={quests}
       />
 

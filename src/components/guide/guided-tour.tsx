@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ArrowRight, ArrowLeft, Check, Compass, Sparkles, X, Sun, Zap, Trophy, ShieldCheck } from "lucide-react";
-import { MAX_DAILY_POINTS } from "@/lib/calculations/gamification";
 
 interface Step {
   title: string;
@@ -37,7 +36,7 @@ const STEPS: Step[] = [
     badge: "Behavioural Nudges",
     icon: Zap,
     description:
-      `Tick quick habits that fit your home, like setting the AC to 24°C. Each can be claimed once per day, week or lifetime, and habit points are capped at ${MAX_DAILY_POINTS} a day, so spamming does not work.`,
+      "Tick quick habits that fit your home, like setting the AC to 24°C. Each can be claimed once per day, week or lifetime, so spamming does not work. There is no daily limit: do more, earn more.",
     actionHint: "Build streaks to level up from Seedling to Sapling and beyond.",
     targetHref: "/actions",
   },

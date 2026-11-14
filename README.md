@@ -125,7 +125,7 @@ sequenceDiagram
   R->>R: verify signed session cookie
   R->>S: completeTask(user, taskId)
   S->>DB: list this user's completions
-  S->>D: dedupe key, today's points, daily cap
+  S->>D: dedupe key and date
   D-->>S: ok(points, impactKg) or reason
   S->>DB: addCompletion (unique user_id + dedupe_key)
   DB-->>S: created or duplicate
@@ -282,7 +282,7 @@ tests/                  unit tests
 - **Emission factors are indicative.** Update `EMISSION_FACTORS` from the current CEA release before any official use.
 - **Solar subsidy and cost figures are assumptions**, labelled unverified in the app. Confirm on the PM Surya Ghar portal.
 - **Cleanest Hour is modelled**, not live grid data, and shows rupee effects only when the user supplies a peak surcharge.
-- **Most tasks are self-reported.** Fairness comes from once-per-window rewards and a daily cap. The three high-impact one-time tasks need a photo that a person approves. That is a person looking at a picture, not proof the appliance is real.
+- **Most tasks are self-reported.** Fairness comes from once-per-window rewards and from an evidence-weighted leaderboard score (unchecked tick-boxes count for a quarter). There is no daily points limit. The three high-impact one-time tasks need a photo that a person approves. That is a person looking at a picture, not proof the appliance is real.
 - **Time windows use the server clock in India time**, and the AC rule uses a city-level forecast. If no weather service answers, the AC rule steps aside instead of blocking anyone. The bill-based savings bonus is stronger, but the units are still typed in by the household, so it is not audited.
 - **Accounts are email and password.** Emails are not verified and there is no password reset, because the app does not send email. Sign-in and registration attempts are rate limited in memory, which suits one server process. Demo accounts are shared sandboxes: the demo administrator is view only, and demo households and installers cannot be edited.
 - **Vendor listings are reviewed by an administrator, not audited.** Empanelment claims are self-declared and the page tells citizens to verify them on the official lists. Sample listings are labelled as samples.

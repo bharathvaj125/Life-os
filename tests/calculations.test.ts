@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateFootprint, trendOf } from "@/lib/calculations/footprint";
 import { estimateSolar, subsidyFor } from "@/lib/calculations/solar";
-import { MAX_DAILY_POINTS, challengeProgress, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
+import { DAILY_GOAL_POINTS, challengeProgress, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
 import { generateNudges } from "@/lib/calculations/nudges";
 import { MIN_GROUP_SIZE, aggregateByRegion } from "@/lib/calculations/aggregate";
 import { bestStart, scheduleImpact, touchesPeak, windowIndex } from "@/lib/calculations/schedule";
@@ -64,16 +64,17 @@ describe("gamification", () => {
   const ac = getTask("ac-setpoint")!;
   const once = getTask("led-swap")!;
   it("rewards a task once per window", () => {
-    expect(evaluateCompletion(ac, new Set(), 0, "2026-11-03").ok).toBe(true);
+    expect(evaluateCompletion(ac, new Set(), "2026-11-03").ok).toBe(true);
     const key = new Set([dedupeKeyFor(ac, "2026-11-03")]);
-    expect(evaluateCompletion(ac, key, 10, "2026-11-03").ok).toBe(false);
-    expect(evaluateCompletion(ac, key, 10, "2026-11-04").ok).toBe(true);
+    expect(evaluateCompletion(ac, key, "2026-11-03").ok).toBe(false);
+    expect(evaluateCompletion(ac, key, "2026-11-04").ok).toBe(true);
   });
   it("never rewards one-time tasks twice", () => {
-    expect(evaluateCompletion(once, new Set([dedupeKeyFor(once, "2026-01-01")]), 0, "2026-12-01").ok).toBe(false);
+    expect(evaluateCompletion(once, new Set([dedupeKeyFor(once, "2026-01-01")]), "2026-12-01").ok).toBe(false);
   });
-  it("stops at the daily points ceiling", () => {
-    expect(evaluateCompletion(ac, new Set(), MAX_DAILY_POINTS - 5, "2026-11-03").ok).toBe(false);
+  it("has no daily ceiling: an active household can pass the daily goal", () => {
+    expect(DAILY_GOAL_POINTS).toBe(80);
+    expect(evaluateCompletion(ac, new Set(), "2026-11-03").ok).toBe(true);
   });
   it("counts streaks, allowing today to be still empty", () => {
     expect(computeStreak(["2026-11-01", "2026-11-02", "2026-11-03"], "2026-11-03").current).toBe(3);

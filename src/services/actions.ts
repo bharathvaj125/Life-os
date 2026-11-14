@@ -4,7 +4,7 @@ import type { Completion, Task, TaskProof, TaskProofStatus, User } from "@/types
 import { getTaskFor, taskApplies, taskBlockReason, tasksFor } from "@/features/gamification/tasks";
 import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
 import { generateNudges } from "@/lib/calculations/nudges";
-import { MAX_DAILY_POINTS, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
+import { DAILY_GOAL_POINTS, computeStreak, dedupeKeyFor, evaluateCompletion, levelFor } from "@/lib/calculations/gamification";
 import { istDate, istHour } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { ApiError } from "@/lib/api";
@@ -19,7 +19,7 @@ export interface TaskView extends Task {
   proofStatus: TaskProofStatus | null;
 }
 
-/** Bill-based bonuses are monthly, so they count toward points and impact but not the daily cap or the daily streak. */
+/** Bill-based bonuses are monthly, so they count toward points and impact but not the daily goal or the daily streak. */
 const isHabit = (c: Completion) => c.taskId !== BILL_SAVINGS_TASK_ID;
 
 export async function getProgress(userId: string, now: Date = new Date()) {
@@ -29,7 +29,7 @@ export async function getProgress(userId: string, now: Date = new Date()) {
   return {
     points,
     pointsToday: completions.filter((c) => c.completedOn === today && isHabit(c)).reduce((sum, c) => sum + c.points, 0),
-    dailyLimit: MAX_DAILY_POINTS,
+    dailyGoal: DAILY_GOAL_POINTS,
     kgAvoided: Math.round(completions.reduce((sum, c) => sum + c.impactKg, 0) * 10) / 10,
     completionsCount: completions.length,
     streak: computeStreak(completions.filter(isHabit).map((c) => c.completedOn), today),
@@ -71,12 +71,7 @@ export async function completeTask(user: User, taskId: string, now: Date = new D
   const repo = getRepository();
   const today = istDate(now);
   const mine = await repo.listCompletions(user.id);
-  const result = evaluateCompletion(
-    task,
-    new Set(mine.map((c) => c.dedupeKey)),
-    opts.approvedProof ? 0 : mine.filter((c) => c.completedOn === today && isHabit(c)).reduce((sum, c) => sum + c.points, 0),
-    today,
-  );
+  const result = evaluateCompletion(task, new Set(mine.map((c) => c.dedupeKey)), today);
   if (!result.ok) throw new ApiError(409, result.reason);
   // The store enforces uniqueness again, so two simultaneous requests still cannot double-award.
   const saved = await repo.addCompletion({ id: randomUUID(), userId: user.id, taskId, dedupeKey: result.dedupeKey, completedOn: today, points: result.points, impactKg: result.impactKg, createdAt: now.toISOString() });

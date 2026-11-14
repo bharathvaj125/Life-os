@@ -24,7 +24,7 @@ interface Props {
   streak: { current: number; longest: number };
   week: GameDay[];
   pointsToday: number;
-  dailyLimit: number;
+  dailyGoal: number;
   /** Tasks that can be claimed right now, biggest first. */
   quests: Quest[];
   /** Page the quest chips lead to (for example /actions). Empty keeps them on the current page. */
@@ -67,7 +67,7 @@ function LevelRing({ pct, level }: { pct: number; level: number }) {
   );
 }
 
-export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit, quests, questPrefix = "", compact = false }: Props) {
+export function GameDeck({ points, level, streak, week, pointsToday, dailyGoal, quests, questPrefix = "", compact = false }: Props) {
   const streakNow = streak.current;
   const prev = useRef({ points, level: level.level, streak: streakNow });
   const [gain, setGain] = useState<{ n: number; key: number } | null>(null);
@@ -98,12 +98,12 @@ export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit,
 
   const span = level.nextAt === null ? 1 : level.nextAt - level.from;
   const pct = level.nextAt === null ? 100 : Math.min(100, Math.max(0, Math.round(((points - level.from) / span) * 100)));
-  const quotaPct = Math.min(100, Math.round((pointsToday / dailyLimit) * 100));
+  const quotaPct = Math.min(100, Math.round((pointsToday / dailyGoal) * 100));
   const nextMilestone = MILESTONES.find((m) => m > streak.current);
   const heat = streak.current >= 14 ? "inferno" : streak.current >= 7 ? "blaze" : streak.current >= 3 ? "flame" : streak.current >= 1 ? "ember" : "cold";
   const todayDone = week.find((d) => d.today)?.done ?? false;
-  const left = Math.max(0, dailyLimit - pointsToday);
-  const reachable = Math.min(left, quests.filter((q) => q.cadence === "daily").reduce((s, q) => s + q.points, 0));
+  const left = Math.max(0, dailyGoal - pointsToday);
+  const waiting = quests.reduce((s, q) => s + q.points, 0);
 
   return (
     <section className={`gd${compact ? " gd-compact" : ""}`} aria-label="Your progress">
@@ -159,10 +159,10 @@ export function GameDeck({ points, level, streak, week, pointsToday, dailyLimit,
       <div className="gd-card gd-today">
         <div className="gd-body">
           <span className="gd-kicker">Today</span>
-          <strong className="gd-title">{pointsToday} <small>/ {dailyLimit} pts</small></strong>
-          <div className="gd-bar quota" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={quotaPct} aria-label="Daily points used"><i style={{ width: `${quotaPct}%` }} /></div>
+          <strong className="gd-title">{pointsToday} <small>pts today · goal {dailyGoal}</small></strong>
+          <div className="gd-bar quota" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={quotaPct} aria-label="Progress to today's goal"><i style={{ width: `${quotaPct}%` }} /></div>
           <span className="gd-sub">
-            {left === 0 ? "Daily cap reached. Photo-checked tasks still count." : reachable > 0 ? `Up to ${reachable} more points are waiting today.` : `${left} points of room left today.`}
+            {left === 0 ? `Goal reached${pointsToday > dailyGoal ? `, plus ${pointsToday - dailyGoal} bonus` : ""}. There is no limit: keep going.` : waiting > 0 ? `${left} to reach today's goal. ${waiting} points are waiting to be claimed.` : `${left} to reach today's goal.`}
           </span>
         </div>
         {quests.length > 0 ? (

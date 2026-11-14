@@ -2,7 +2,8 @@ import type { Challenge, Completion, Membership, Task } from "@/types";
 import { addDays, isoWeekKey } from "@/lib/dates";
 import { EMISSION_FACTORS } from "./emission-factors";
 
-export const MAX_DAILY_POINTS = 80;
+/** A daily target to aim for. It is a goal, not a limit: a very active household can earn more and is never stopped. */
+export const DAILY_GOAL_POINTS = 80;
 
 export function dedupeKeyFor(task: Task, date: string): string {
   if (task.cadence === "daily") return `${task.id}:${date}`;
@@ -17,16 +18,16 @@ export function impactKgOf(task: Task): number {
 export type Evaluation = { ok: true; dedupeKey: string; points: number; impactKg: number } | { ok: false; reason: string };
 
 /**
- * Decides whether a self-reported completion earns points. Server-side only: the client never sets points.
- * Two guards against gaming: one reward per task per cadence window, and a daily points ceiling.
+ * Decides whether a completion earns points. Server-side only: the client never sets points.
+ * The guard against gaming is one reward per task per cadence window. There is no daily ceiling: spamming is
+ * already impossible, and unchecked tick-boxes count for much less on the leaderboards (see ranking.ts).
  */
-export function evaluateCompletion(task: Task, existingKeys: ReadonlySet<string>, pointsToday: number, date: string): Evaluation {
+export function evaluateCompletion(task: Task, existingKeys: ReadonlySet<string>, date: string): Evaluation {
   const dedupeKey = dedupeKeyFor(task, date);
   if (existingKeys.has(dedupeKey)) {
     const when = task.cadence === "daily" ? "today" : task.cadence === "weekly" ? "this week" : "already";
     return { ok: false, reason: `You have already completed this ${when === "already" ? "task" : `task ${when}`}.` };
   }
-  if (pointsToday + task.points > MAX_DAILY_POINTS) return { ok: false, reason: `Daily points limit of ${MAX_DAILY_POINTS} reached. Come back tomorrow.` };
   return { ok: true, dedupeKey, points: task.points, impactKg: impactKgOf(task) };
 }
 

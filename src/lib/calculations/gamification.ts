@@ -60,7 +60,18 @@ export function levelFor(points: number) {
   let idx = 0;
   LEVELS.forEach((l, i) => { if (points >= l.from) idx = i; });
   const next = LEVELS[idx + 1];
-  return { level: idx + 1, name: LEVELS[idx].name, nextAt: next?.from ?? null, toNext: next ? next.from - points : 0 };
+  return { level: idx + 1, name: LEVELS[idx].name, from: LEVELS[idx].from, nextAt: next?.from ?? null, nextName: next?.name ?? null, toNext: next ? next.from - points : 0 };
+}
+
+const WEEKDAY = ["S", "M", "T", "W", "T", "F", "S"];
+
+/** The last seven days, oldest first, marking which had a completed habit. Dates are India dates, like the rest of the app. */
+export function weekStrip(doneDates: string[], today: string): { label: string; done: boolean; today: boolean }[] {
+  const done = new Set(doneDates);
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(today, i - 6);
+    return { label: WEEKDAY[new Date(`${date}T00:00:00Z`).getUTCDay()], done: done.has(date), today: date === today };
+  });
 }
 
 export interface ChallengeProgress {

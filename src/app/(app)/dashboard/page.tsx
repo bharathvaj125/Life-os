@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, Check, Flame, ListChecks, TrendingDown, TrendingUp, Users, Zap, Leaf } from "lucide-react";
+import { GameDeck } from "@/components/gamification/game-deck";
+import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
+import { weekStrip } from "@/lib/calculations/gamification";
 import { NudgeList } from "@/components/actions/nudge-list";
 import { ImpactChart } from "@/components/charts/impact-chart";
 import { LiveWeather } from "@/components/weather/live-weather";
@@ -17,7 +20,7 @@ import { EMISSION_FACTORS } from "@/lib/calculations/emission-factors";
 import { requireUser } from "@/lib/auth/session";
 import { describeEquipment } from "@/features/equipment/catalog";
 import { istClock } from "@/lib/calculations/day";
-import { formatPeriod, istHour } from "@/lib/dates";
+import { formatPeriod, istDate, istHour } from "@/lib/dates";
 import { num } from "@/lib/format";
 import { getActionsView } from "@/services/actions";
 import { getFootprintView } from "@/services/footprint";
@@ -191,6 +194,20 @@ export default async function DashboardPage() {
           tone="good"
         />
       </section>
+
+      <div style={{ marginBottom: "24px" }}>
+        <GameDeck
+          compact
+          points={progress.points}
+          level={progress.level}
+          streak={progress.streak}
+          week={weekStrip(progress.completions.filter((c) => c.taskId !== BILL_SAVINGS_TASK_ID).map((c) => c.completedOn), istDate(now))}
+          pointsToday={progress.pointsToday}
+          dailyLimit={progress.dailyLimit}
+          quests={tasks.filter((t) => !t.doneInWindow && !t.blockedReason && t.proofStatus !== "pending").map((t) => ({ id: t.id, title: t.title, points: t.points, cadence: t.cadence })).sort((x, y) => y.points - x.points)}
+          questHref={(q) => `/actions#task-${q.id}`}
+        />
+      </div>
 
       {progress.kgAvoided > 0 ? (
         <div style={{ marginBottom: "24px" }}>

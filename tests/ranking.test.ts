@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evidenceOf, rankDistricts, rankingScore, rankingWeight } from "@/lib/calculations/ranking";
 import { getTaskFor, tasksFor } from "@/features/gamification/tasks";
+import { weekStrip } from "@/lib/calculations/gamification";
 import type { Equipment } from "@/types";
 
 const eq = (over: Partial<Equipment>): Equipment => ({ acCount: 0, geyser: false, washingMachine: false, dryer: false, waterPump: false, inductionStove: false, lpg: true, petrolCar: false, petrolTwoWheeler: false, ev: "none", rooftopSolar: false, inverterBattery: false, ...over });
@@ -44,5 +45,15 @@ describe("vehicle wording", () => {
   });
   it("counts the smaller saving for a two-wheeler", () => {
     expect(getTaskFor("transit-day", eq({ petrolTwoWheeler: true }))!.kgSaved).toBeLessThan(getTaskFor("transit-day", eq({ petrolCar: true }))!.kgSaved);
+  });
+});
+
+describe("week strip", () => {
+  it("marks the days with a completed habit and flags today", () => {
+    const week = weekStrip(["2026-11-14", "2026-11-12"], "2026-11-14");
+    expect(week).toHaveLength(7);
+    expect(week[6]).toMatchObject({ done: true, today: true, label: "S" });
+    expect(week[4].done).toBe(true);
+    expect(week[5].done).toBe(false);
   });
 });

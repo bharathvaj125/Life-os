@@ -4,12 +4,16 @@ import { NudgeList } from "@/components/actions/nudge-list";
 import { ProofUpload } from "@/components/actions/proof-upload";
 import { LiveWeatherNudges } from "@/components/weather/live-weather";
 import { Card } from "@/components/ui/card";
-import { ProgressBar, Stat } from "@/components/ui/field";
+import { GameDeck } from "@/components/gamification/game-deck";
+import { Stat } from "@/components/ui/field";
+import { BILL_SAVINGS_TASK_ID } from "@/lib/calculations/bill-savings";
+import { weekStrip } from "@/lib/calculations/gamification";
+import { istDate } from "@/lib/dates";
 import { formatHour } from "@/features/gamification/tasks";
 import { requireUser } from "@/lib/auth/session";
 import { num } from "@/lib/format";
 import { getActionsView, type TaskView } from "@/services/actions";
-import { Flame, Shield, Sparkles, Zap } from "lucide-react";
+import { Shield, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = { title: "Behavioural Nudges & Micro-Tasks" };
 
@@ -31,6 +35,11 @@ export default async function ActionsPage() {
   const dailyTasks = tasks.filter((t) => t.cadence === "daily");
   const weeklyTasks = tasks.filter((t) => t.cadence === "weekly");
   const onceTasks = tasks.filter((t) => t.cadence === "once");
+  // What can be claimed right now, biggest first. Photo tasks are included: they are the points that count most.
+  const quests = tasks
+    .filter((t) => !t.doneInWindow && !t.blockedReason && t.proofStatus !== "pending")
+    .map((t) => ({ id: t.id, title: t.title, points: t.points, cadence: t.cadence }))
+    .sort((a, b) => b.points - a.points);
 
   return (
     <>
@@ -40,50 +49,19 @@ export default async function ActionsPage() {
         Nudges are automatically triggered by your household consumption patterns and the active time of day. Log each completed action to claim points towards community goals.
       </p>
 
-      <section className="stats" aria-label="Progress summary">
-        <Stat
-          label="Total Points"
-          value={
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Zap size={22} style={{ color: "var(--surya-600)" }} />
-              {progress.points} pts
-            </span>
-          }
-          note={`${progress.level.name}`}
-        />
-        <Stat
-          label="Active Streak"
-          value={
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Flame size={22} style={{ color: "var(--surya-600)" }} />
-              {progress.streak.current} {progress.streak.current === 1 ? "day" : "days"}
-            </span>
-          }
-          note={`Record: ${progress.streak.longest} days`}
-        />
-        <Stat
-          label="CO₂e Avoided"
-          value={`${num(progress.kgAvoided)} kg`}
-          tone="good"
-          note="Lifetime reduction"
-        />
-        <Stat
-          label="Today's Quota"
-          value={`${progress.pointsToday} / ${progress.dailyLimit}`}
-          note="Max daily cap to preserve fair competition"
-        />
-      </section>
+      <GameDeck
+        points={progress.points}
+        level={progress.level}
+        streak={progress.streak}
+        week={weekStrip(progress.completions.filter((c) => c.taskId !== BILL_SAVINGS_TASK_ID).map((c) => c.completedOn), istDate())}
+        pointsToday={progress.pointsToday}
+        dailyLimit={progress.dailyLimit}
+        quests={quests}
+      />
 
-      <div style={{ marginBottom: "32px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px", fontWeight: 600, marginBottom: "6px" }}>
-          <span>Daily points progress</span>
-          <span>{Math.round((progress.pointsToday / progress.dailyLimit) * 100)}%</span>
-        </div>
-        <ProgressBar
-          pct={Math.round((progress.pointsToday / progress.dailyLimit) * 100)}
-          label="Daily points used"
-        />
-      </div>
+      <section className="stats" aria-label="Impact">
+        <Stat label="CO₂e Avoided" value={`${num(progress.kgAvoided)} kg`} tone="good" note="Lifetime reduction from your actions" />
+      </section>
 
       <Card
         title="Dynamic Contextual Suggestions"

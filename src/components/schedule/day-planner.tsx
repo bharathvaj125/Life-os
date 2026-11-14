@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Plus, RotateCcw, Sparkles, Trash2, Wand2, X } from "lucide-react";
+import { ArrowRight, CalendarCheck, Plus, RotateCcw, Save, Sparkles, Trash2, Wand2, X } from "lucide-react";
 import { CountUp } from "@/components/ui/count-up";
 import { istClock } from "@/lib/calculations/day";
 import {
@@ -33,6 +33,26 @@ interface Props {
 }
 
 const STORE = "lifeos-day-plan-v1";
+const HISTORY = "lifeos-day-plan-history-v1";
+const MAX_SAVED_DAYS = 60;
+
+/** One saved day: the plan as it was, plus the totals at the time, so the list needs no recalculation. */
+interface SavedDay {
+  date: string;
+  savedAt: string;
+  items: PlanItem[];
+  placed: number;
+  kwhPerMonth: number;
+  kgNow: number;
+  saveKgPerMonth: number;
+}
+
+/** Today's date in India, as YYYY-MM-DD. */
+const todayIst = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+const monthLabel = (ym: string) => new Date(`${ym}-01T00:00:00Z`).toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+const shortDay = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const MIN_IDX = 0.82;
 const MAX_IDX = 1.16;
 const RATES_DEFAULT = GUJARAT_TARIFF.slabs.map((s) => s.rate);
@@ -161,6 +181,8 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
   const [tod, setTod] = useState<TimeOfDay>({ peakExtraInr: 0, solarRebateInr: 0 });
   const [now, setNow] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
+  const [history, setHistory] = useState<SavedDay[]>([]);
+  const [justSaved, setJustSaved] = useState(false);
 
   // Load what this person set up last time, then start the live clock. Nothing is pre-filled for a first visit.
   useEffect(() => {
@@ -177,6 +199,12 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
         }
       } catch {
         // Nothing saved, or storage blocked: start empty.
+      }
+      try {
+        const days = JSON.parse(localStorage.getItem(HISTORY) ?? "[]");
+        if (Array.isArray(days)) setHistory(days);
+      } catch {
+        // No saved days yet.
       }
       setNow(istClock(new Date()));
       setReady(true);
@@ -214,6 +242,44 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
     setOpen(uid);
   };
   const moveAllToBest = () => setItems((list) => list.map((i) => (i.start === null ? i : { ...i, start: planItem(i, effUnits, tariff, tod)?.best ?? i.start })));
+
+  /** Keeps today's plan in the list of saved days. Saving again on the same day replaces that day. */
+  function saveToday() {
+    const date = todayIst();
+    const entry: SavedDay = { date, savedAt: new Date().toISOString(), items, placed: totals.placed, kwhPerMonth: totals.kwhPerMonth, kgNow: totals.kgNow, saveKgPerMonth: totals.saveKgPerMonth };
+    const next = [entry, ...history.filter((d) => d.date !== date)].sort((a, b) => b.date.localeCompare(a.date)).slice(0, MAX_SAVED_DAYS);
+    setHistory(next);
+    try {
+      localStorage.setItem(HISTORY, JSON.stringify(next));
+    } catch {
+      // Private browsing: the day just will not be remembered.
+    }
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 2500);
+  }
+  function removeDay(date: string) {
+    const next = history.filter((d) => d.date !== date);
+    setHistory(next);
+    try {
+      localStorage.setItem(HISTORY, JSON.stringify(next));
+    } catch {
+      // Nothing to do.
+    }
+  }
+
+  // Oldest first for the chart. Each saved day holds monthly-equivalent figures, so a month's average is the mean of its saved days.
+  const trend = useMemo(() => [...history].sort((a, b) => a.date.localeCompare(b.date)).slice(-30), [history]);
+  const monthly = useMemo(() => {
+    const groups = new Map<string, SavedDay[]>();
+    for (const d of history) groups.set(d.date.slice(0, 7), [...(groups.get(d.date.slice(0, 7)) ?? []), d]);
+    return [...groups.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([ym, days]) => ({ ym, count: days.length, kwh: mean(days.map((d) => d.kwhPerMonth)), kg: mean(days.map((d) => d.kgNow)), save: mean(days.map((d) => d.saveKgPerMonth)) }));
+  }, [history]);
+  const peakKg = Math.max(1, ...trend.map((d) => d.kgNow));
+  const first = trend[0];
+  const last = trend[trend.length - 1];
+  const change = first && last && trend.length > 1 && first.kgNow > 0 ? Math.round(((last.kgNow - first.kgNow) / first.kgNow) * 100) : null;
 
   const taken = new Set(items.map((i) => i.name));
   const profileLeft = fromProfile.filter((p) => !taken.has(p.name));
@@ -404,8 +470,68 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
             <button type="button" className="button" onClick={moveAllToBest}><Wand2 size={15} aria-hidden="true" /> Move everything to its cleanest slot</button>
             <button type="button" className="button button-outline" onClick={() => setItems((l) => l.map((i) => ({ ...i, start: null })))}><RotateCcw size={15} aria-hidden="true" /> Clear the day</button>
           </div>
+          <div className="plan-save">
+            <button type="button" className="button button-surya" onClick={saveToday}>
+              <Save size={15} aria-hidden="true" /> {history.some((d) => d.date === todayIst()) ? "Update today's saved plan" : "Save today's plan"}
+            </button>
+            <span role="status">{justSaved ? "Saved ✓" : "Saved on this device. Tomorrow, change the times and save again to keep a new day."}</span>
+          </div>
         </>
       )}
+
+      {/* ---- saved days ---- */}
+      {history.length > 0 ? (
+        <div className="plan-history">
+          <p className="plan-step"><CalendarCheck size={18} aria-hidden="true" /> Your saved days and trend</p>
+
+          <div className="plan-months">
+            {monthly.map((m) => (
+              <div key={m.ym} className="plan-month">
+                <span>{monthLabel(m.ym)} average</span>
+                <strong>{num(m.kg)} <small>kg CO₂ a month</small></strong>
+                <em>{num(m.kg / 30)} kg a day · {num(m.kwh)} units a month · {m.count} day{m.count === 1 ? "" : "s"} saved</em>
+                <em className="good">{m.save > 0 ? `${num(m.save)} kg a month could be saved by shifting` : "Already in the cleanest slots"}</em>
+              </div>
+            ))}
+          </div>
+
+          <div className="plan-trend" role="img" aria-label="Carbon of each saved day, oldest to newest">
+            <div className="plan-trend-head">
+              <b>Day by day</b>
+              {change !== null ? <span className={change <= 0 ? "down" : "up"}>{change <= 0 ? "▼" : "▲"} {Math.abs(change)}% since {shortDay(first.date)}</span> : <span>Save more days to see a trend</span>}
+            </div>
+            <div className="plan-trend-bars">
+              {trend.map((d) => {
+                const kept = Math.max(0, d.kgNow - d.saveKgPerMonth);
+                return (
+                  <div key={d.date} className="plan-trend-col" title={`${dayLabel(d.date)}: ${num(d.kgNow)} kg CO₂ a month, ${num(d.saveKgPerMonth)} kg could be saved`}>
+                    <div className="plan-trend-bar" style={{ height: `${Math.max(6, (d.kgNow / peakKg) * 100)}%` }}>
+                      <i className="save" style={{ flexGrow: d.saveKgPerMonth }} />
+                      <i className="kept" style={{ flexGrow: kept }} />
+                    </div>
+                    <small>{shortDay(d.date)}</small>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="plan-trend-key"><span><i className="kept" /> carbon you would still make</span><span><i className="save" /> could be saved by shifting</span></div>
+          </div>
+
+          <ul>
+            {history.map((d) => (
+              <li key={d.date}>
+                <div className="plan-history-main">
+                  <strong>{dayLabel(d.date)}{d.date === todayIst() ? " (today)" : ""}</strong>
+                  <span>{d.placed} appliance{d.placed === 1 ? "" : "s"} · {num(d.kwhPerMonth)} units a month · {num(d.kgNow)} kg CO₂ a month</span>
+                </div>
+                <span className="plan-history-save">{d.saveKgPerMonth > 0 ? `${num(d.saveKgPerMonth)} kg could be saved` : "In the cleanest slots"}</span>
+                <button type="button" className="plan-link" onClick={() => { setItems(d.items); setOpen(null); }}>Use this plan</button>
+                <button type="button" className="plan-remove" onClick={() => removeDay(d.date)} aria-label={`Delete the saved plan for ${dayLabel(d.date)}`}><Trash2 size={14} aria-hidden="true" /></button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {/* ---- your numbers ---- */}
       <details className="plan-settings">

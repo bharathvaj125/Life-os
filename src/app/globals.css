@@ -2366,3 +2366,17 @@ html[data-intro] .splash { display: grid; }
 .plan-times select { min-height: 36px; padding: 4px 6px; border-radius: 9px; font-size: 13px; font-weight: 700; width: 100%; border: 1.5px solid #3FA535; }
 .plan-times select.unset { border-color: #E8A210; background: rgba(255, 211, 77, 0.12); }
 .plan-times select:disabled { opacity: 0.5; border-color: var(--sand-200); }
+
+.score-guide { margin: -6px 0 18px; border: 1px solid var(--sand-200); border-radius: 14px; padding: 2px 14px; }
+.score-guide summary { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0; font-weight: 700; font-size: 13.5px; }
+.score-guide summary svg { color: #E8A210; flex: none; }
+.score-guide-body { display: grid; gap: 14px; padding-bottom: 14px; font-size: 13.5px; }
+.score-guide-body p { margin: 0; }
+.score-guide-note { color: var(--muted-text); line-height: 1.5; }
+.score-group h4 { margin: 0 0 6px; font-size: 14.5px; }
+.score-group h4 small, .score-table small { font-weight: 400; color: var(--muted-text); font-size: 12px; }
+.score-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.score-table th, .score-table td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--sand-200); vertical-align: top; }
+.score-table th { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted-text); }
+.score-table td:nth-child(2) { font-family: 'JetBrains Mono', monospace; }
+@media (max-width: 640px) { .score-table { display: block; overflow-x: auto; } }

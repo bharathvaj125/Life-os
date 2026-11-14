@@ -6,6 +6,7 @@ import { GUJARAT_DISTRICT_LIST, regionLabel } from "@/lib/calculations/aggregate
 import { num } from "@/lib/format";
 import { TermHelp } from "@/components/ui/term-help";
 import { BadgeCheck, MapPin, Search, ShieldCheck, Trophy, Users } from "lucide-react";
+import { ScoreGuide } from "@/components/community/score-guide";
 import { MIN_DISTRICT_HOUSEHOLDS, type DistrictScore } from "@/lib/calculations/ranking";
 
 type DistrictRow = DistrictScore & { name: string; isYours: boolean };
@@ -104,6 +105,7 @@ export function LeaderboardView({ allRows, districts, userPrefix, userRegion }: 
       <p className="lb-how">
         <strong>How the score works.</strong> Points that an administrator approved from a photo, that the app saw happen, or that come from a scanned bill count in full. Tick-box habits nobody can check count for only a quarter, or half once your bill has been scanned. So proof beats promises.
       </p>
+      <ScoreGuide />
 
       {view === "districts" ? (
         <DistrictBoard districts={districts} onOpen={(prefix) => { setScope(prefix); setView("people"); }} />

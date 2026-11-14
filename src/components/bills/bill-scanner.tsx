@@ -137,6 +137,9 @@ export function BillScanner() {
       <p style={{ margin: 0 }}>
         Take a photo or choose a PDF of your electricity bill. We read it <strong>on your device</strong>, so the picture is never uploaded. A scanned bill earns a badge because its meter readings have to add up to the units.
       </p>
+      <p className="callout" style={{ margin: 0, fontSize: "13.5px" }}>
+        <strong>Honest limit:</strong> a photo or typed numbers can be faked, and today we only check that the readings add up and that no one else used the same bill. <strong>Next step:</strong> check the bill&apos;s reference number and consumer number against your electricity company&apos;s own records, which a photo cannot fake. Until then, scanned bills count more on the leaderboard than typed numbers, but they are not treated as proof.
+      </p>
 
       {!form && !saved ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>

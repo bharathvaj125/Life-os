@@ -272,12 +272,41 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
               <div className="plan-name-col">
                 <button type="button" className="plan-name plan-name-btn" onClick={() => setOpen(open === item.uid ? null : item.uid)} aria-expanded={open === item.uid} title="Change power, hours and days">
                   <strong>{item.name}</strong>
-                  <small>{item.kw} kW · {item.hours} h · {item.daysPerWeek}×/wk · edit</small>
+                  <small>{item.kw} kW{item.start !== null ? ` · ${hourLabel(item.start)} to ${hourLabel((item.start + item.hours) % 24)}` : ""} · edit</small>
                 </button>
-                <select className={`plan-time${item.start === null ? " unset" : ""}`} value={item.start ?? ""} aria-label={`When do you run ${item.name}?`} onChange={(e) => patch(item.uid, { start: e.target.value === "" ? null : Number(e.target.value) })}>
-                  <option value="">Choose start time</option>
-                  {hours24.map((h) => <option key={h} value={h}>Starts {hourLabel(h)}</option>)}
-                </select>
+                <div className="plan-times">
+                  <label>
+                    <span>Starts</span>
+                    <select className={item.start === null ? "unset" : ""} value={item.start ?? ""} aria-label={`When does ${item.name} start?`} onChange={(e) => patch(item.uid, { start: e.target.value === "" ? null : Number(e.target.value) })}>
+                      <option value="">Choose</option>
+                      {hours24.map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Ends</span>
+                    <select
+                      disabled={item.start === null}
+                      value={item.start === null ? "" : (item.start + item.hours) % 24}
+                      aria-label={`When does ${item.name} stop?`}
+                      onChange={(e) => item.start !== null && patch(item.uid, { hours: clamp(((Number(e.target.value) - item.start + 24) % 24) || 1, 1, 12) })}
+                    >
+                      {item.start === null ? <option value="">-</option> : null}
+                      {hours24.map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Runs for</span>
+                    <select value={item.hours} aria-label={`How many hours does ${item.name} run?`} onChange={(e) => patch(item.uid, { hours: Number(e.target.value) })}>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => <option key={h} value={h}>{h} {h === 1 ? "hour" : "hours"}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Days a week</span>
+                    <select value={item.daysPerWeek} aria-label={`How many days a week do you run ${item.name}?`} onChange={(e) => patch(item.uid, { daysPerWeek: Number(e.target.value) })}>
+                      {Array.from({ length: 7 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d} {d === 1 ? "day" : "days"}</option>)}
+                    </select>
+                  </label>
+                </div>
               </div>
               <div className="plan-track">
                 <Lane item={item} best={p?.best ?? null} onStart={(h) => patch(item.uid, { start: h })} />
@@ -291,8 +320,6 @@ export function DayPlanner({ fromProfile, defaultUnits }: Props) {
                       <span className="plan-num-box"><input type="text" value={item.name} maxLength={40} onChange={(e) => patch(item.uid, { name: e.target.value })} /></span>
                     </label>
                     <NumberInput label="Power" value={item.kw} min={0.01} max={20} step={0.05} suffix="kW" onChange={(n) => patch(item.uid, { kw: n })} />
-                    <NumberInput label="Each run" value={item.hours} min={1} max={12} suffix="hours" onChange={(n) => patch(item.uid, { hours: Math.round(n) })} />
-                    <NumberInput label="Runs" value={item.daysPerWeek} min={1} max={7} suffix="days / week" onChange={(n) => patch(item.uid, { daysPerWeek: Math.round(n) })} />
                     <label className="plan-num">
                       <span>It can run between</span>
                       <span className="plan-num-box plan-pair">

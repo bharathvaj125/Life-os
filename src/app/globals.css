@@ -2359,3 +2359,10 @@ html[data-intro] .splash { display: grid; }
 .plan-all { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13.5px; }
 .plan-all select { min-height: 38px; padding: 6px 10px; border-radius: 10px; }
 .plan-all em { font-style: normal; font-size: 12px; color: var(--muted-text); }
+
+.plan-times { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.plan-times label { display: grid; gap: 2px; min-width: 0; }
+.plan-times span { font-size: 10.5px; letter-spacing: 0.04em; color: var(--muted-text); font-weight: 700; text-transform: uppercase; }
+.plan-times select { min-height: 36px; padding: 4px 6px; border-radius: 9px; font-size: 13px; font-weight: 700; width: 100%; border: 1.5px solid #3FA535; }
+.plan-times select.unset { border-color: #E8A210; background: rgba(255, 211, 77, 0.12); }
+.plan-times select:disabled { opacity: 0.5; border-color: var(--sand-200); }
